@@ -98,4 +98,49 @@ public class HorarioEstablecimientoServiceImpl implements HorarioEstablecimiento
     horarioRepository.save(horario);
     return null;
   }
+
+  @Override
+  @Transactional
+  public List<HorarioEstablecimientoDTO> crearHorariosEnLote(List<HorarioEstablecimientoDTO> horariosDTO) {
+    try {
+      if (horariosDTO == null || horariosDTO.isEmpty()) {
+        throw new RuntimeException("La lista de horarios no puede estar vacía");
+      }
+
+      Integer idEstablecimiento = horariosDTO.get(0).getEstablecimiento().getEstablecimientoId();
+
+      // Buscamos el establecimiento una sola vez para optimizar
+      Establecimiento establecimiento = establecimientoRepository.findById(idEstablecimiento)
+        .orElseThrow(() -> new RuntimeException("Establecimiento no encontrado con ID: " + idEstablecimiento));
+
+      String usuarioCreador = SecurityContextHolder.getContext().getAuthentication().getName();
+      LocalDateTime ahora = LocalDateTime.now();
+
+      // Mapeamos toda la lista a entidades
+      List<HorarioEstablecimiento> entidadesAGuardar = horariosDTO.stream().map(dto -> {
+        HorarioEstablecimiento horario = new HorarioEstablecimiento();
+        horario.setEstablecimiento(establecimiento);
+        horario.setDiaSemana(dto.getDiaSemana());
+        horario.setHoraApertura(dto.getHoraApertura());
+        horario.setHoraCierre(dto.getHoraCierre());
+        horario.setCerradoTodoElDia(dto.getCerradoTodoElDia());
+
+        horario.setUsuarioCreacion(usuarioCreador);
+        horario.setFechaCreacion(ahora);
+        horario.setEstadoActivo(true);
+        return horario;
+      }).toList();
+
+      // Guardamos todos de un solo golpe
+      List<HorarioEstablecimiento> horariosGuardados = horarioRepository.saveAll(entidadesAGuardar);
+
+      return horariosGuardados.stream()
+        .map(h -> modelMapper.map(h, HorarioEstablecimientoDTO.class))
+        .toList();
+
+    } catch (Exception e) {
+      System.out.println("Error al crear los horarios en lote: " + e.getMessage());
+      throw new RuntimeException("Error al crear los horarios: " + e.getMessage());
+    }
+  }
 }

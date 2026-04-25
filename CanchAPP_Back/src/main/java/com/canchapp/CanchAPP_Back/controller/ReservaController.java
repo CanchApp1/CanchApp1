@@ -80,4 +80,11 @@ public class ReservaController {
     List<ReservaDTO> historial = reservaService.obtenerHistorialPorUsuario(idUsuario);
     return ResponseEntity.ok(responseService.createResponse(historial, "retrieve"));
   }
+
+  //Endpoint para crear una reserva manualmente por el Administrador (Sin pasarela de pago)
+  @PostMapping("/admin")
+  public ResponseEntity<ReservaDTO> crearReservaAdmin(@RequestBody ReservaDTO reservaDTO) {
+    ReservaDTO nuevaReserva = reservaService.crearReservaAdmin(reservaDTO);
+    return ResponseEntity.ok(nuevaReserva);
+  }
 }

@@ -1,15 +1,9 @@
 package com.canchapp.CanchAPP_Back.service.implement;
 
 import com.canchapp.CanchAPP_Back.dto.ReservaDTO;
-import com.canchapp.CanchAPP_Back.model.Cancha;
-import com.canchapp.CanchAPP_Back.model.HorarioEstablecimiento;
-import com.canchapp.CanchAPP_Back.model.Reserva;
-import com.canchapp.CanchAPP_Back.model.Usuario; // Asumiendo tu clase Usuario
-import com.canchapp.CanchAPP_Back.repository.CanchaRepository;
-import com.canchapp.CanchAPP_Back.repository.HorarioEstablecimientoRepository;
-import com.canchapp.CanchAPP_Back.repository.ReservaRepository;
+import com.canchapp.CanchAPP_Back.model.*;
+import com.canchapp.CanchAPP_Back.repository.*;
 // import com.canchapp.CanchAPP_Back.repository.UsuarioRepository; // Necesario para crearReserva
-import com.canchapp.CanchAPP_Back.repository.UsuarioRepository;
 import com.canchapp.CanchAPP_Back.service.interfaces.ReservaService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -36,6 +30,7 @@ public class ReservaServiceImpl implements ReservaService {
 
   // el tiempo mínimo para alquilar es de 1 hora (60 minutos)
   private final int INTERVALO_MINUTOS = 60;
+  private final PagoRepository pagoRepository;
 
   // OBTENER HORAS DE INICIO DISPONIBLES
   @Override
@@ -217,5 +212,81 @@ public class ReservaServiceImpl implements ReservaService {
     }
 
     return historialDTO;
+  }
+
+  @Override
+  @Transactional
+  public ReservaDTO crearReservaAdmin(ReservaDTO reservaDTO) {
+    // Obtener Admin desde el Token
+    String correoAutenticado = SecurityContextHolder.getContext().getAuthentication().getName();
+    Usuario usuarioAdmin = usuarioRepository.findByCorreo(correoAutenticado)
+      .orElseThrow(() -> new RuntimeException("Usuario autenticado no encontrado"));
+
+    // Validaciones de Horario y Cruce
+    if (!reservaDTO.getHoraFin().isAfter(reservaDTO.getHoraInicio())) {
+      throw new RuntimeException("La hora de fin debe ser posterior a la hora de inicio");
+    }
+
+    Integer idCancha = reservaDTO.getCancha().getCanchaId();
+    boolean existeCruce = reservaRepository.existeCruceDeHorarios(
+      idCancha, reservaDTO.getFecha(), reservaDTO.getHoraInicio(), reservaDTO.getHoraFin());
+
+    if (existeCruce) {
+      throw new RuntimeException("La cancha ya se encuentra reservada en este bloque horario.");
+    }
+
+    Cancha cancha = canchaRepository.findById(idCancha)
+      .orElseThrow(() -> new RuntimeException("Cancha no encontrada"));
+
+    // 3. Crear y guardar la Reserva
+    Reserva nuevaReserva = new Reserva();
+    nuevaReserva.setUsuario(usuarioAdmin);
+    nuevaReserva.setCancha(cancha);
+    nuevaReserva.setFecha(reservaDTO.getFecha());
+    nuevaReserva.setHoraInicio(reservaDTO.getHoraInicio());
+    nuevaReserva.setHoraFin(reservaDTO.getHoraFin());
+    nuevaReserva.setDescripcion(reservaDTO.getDescripcion());
+    nuevaReserva.setEstadoReserva("CONFIRMADA");
+    nuevaReserva.setEstadoActivo(true);
+    nuevaReserva.setFechaCreacion(LocalDateTime.now());
+    nuevaReserva.setUsuarioCreacion(correoAutenticado);
+
+    // Guardamos la reserva para obtener su ID
+    Reserva reservaGuardada = reservaRepository.save(nuevaReserva);
+
+    // CÁLCULO DEL PRECIO Y REGISTRO AUTOMÁTICO DEL PAGO
+    // Calculamos los minutos exactos de diferencia
+    long minutosReservados = java.time.temporal.ChronoUnit.MINUTES.between(
+      reservaDTO.getHoraInicio(), reservaDTO.getHoraFin());
+
+    // Convertimos a horas (ej: 90 min / 60 = 1.5 horas)
+    double horasReservadas = minutosReservados / 60.0;
+
+    // Multiplicamos por el precio de la cancha
+    Double totalAPagar = horasReservadas * cancha.getPrecioPorHora();
+
+    // Creamos la entidad Pago ajustada a tu clase Pago.java
+    Pago pagoAutomatico = new Pago();
+    pagoAutomatico.setReserva(reservaGuardada);
+    pagoAutomatico.setUsuario(usuarioAdmin); // Relacionamos el pago con el usuario
+    pagoAutomatico.setFecha(LocalDate.now()); // Tipo LocalDate
+    pagoAutomatico.setHoraPago(LocalTime.now()); // Tipo LocalTime
+
+    // Convertimos el Double a BigDecimal por la precisión financiera
+    pagoAutomatico.setValorPago(java.math.BigDecimal.valueOf(totalAPagar));
+
+    // Usamos el campo de Stripe para identificar que fue un pago manual
+    pagoAutomatico.setStripePaymentId("MANUAL_ADMIN_" + System.currentTimeMillis());
+    pagoAutomatico.setEstadoPago("COMPLETADO");
+
+    // Auditoría del pago
+    pagoAutomatico.setFechaCreacion(LocalDateTime.now());
+    pagoAutomatico.setUsuarioCreacion(correoAutenticado);
+
+    // Guardamos el pago en la base de datos
+    pagoRepository.save(pagoAutomatico);
+
+    // Retornamos la reserva mapeada
+    return modelMapper.map(reservaGuardada, ReservaDTO.class);
   }
 }

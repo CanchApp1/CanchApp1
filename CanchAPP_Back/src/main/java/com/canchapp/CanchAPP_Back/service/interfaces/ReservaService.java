@@ -21,4 +21,6 @@ public interface ReservaService {
 
   // Obtener historial de reservas de un usuario
   List<ReservaDTO> obtenerHistorialPorUsuario(Integer idUsuario);
+
+  ReservaDTO crearReservaAdmin(ReservaDTO reservaDTO);
 }

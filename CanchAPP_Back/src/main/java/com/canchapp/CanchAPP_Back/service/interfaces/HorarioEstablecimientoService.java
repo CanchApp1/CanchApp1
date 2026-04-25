@@ -9,4 +9,5 @@ public interface HorarioEstablecimientoService {
   HorarioEstablecimientoDTO crearHorario(HorarioEstablecimientoDTO horarioDTO);
   HorarioEstablecimientoDTO actualizarHorario(Integer id, HorarioEstablecimientoDTO horarioDTO);
   Void eliminarHorario(Integer id);
+  List<HorarioEstablecimientoDTO> crearHorariosEnLote(List<HorarioEstablecimientoDTO> horariosDTO);
 }

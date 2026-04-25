@@ -51,4 +51,12 @@ public class HorarioEstablecimientoController {
     return ResponseEntity.ok(responseService.createResponse(null, "delete"));
   }
 
+  @PostMapping("/lote")
+  public ResponseEntity<List<HorarioEstablecimientoDTO>> crearHorariosEnLote(
+    @RequestBody List<HorarioEstablecimientoDTO> horariosDTO) {
+
+    List<HorarioEstablecimientoDTO> horariosGuardados = horarioService.crearHorariosEnLote(horariosDTO);
+    return ResponseEntity.ok(horariosGuardados);
+  }
+
 }

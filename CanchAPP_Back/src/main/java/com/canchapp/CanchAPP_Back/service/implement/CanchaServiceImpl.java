@@ -1,7 +1,6 @@
 package com.canchapp.CanchAPP_Back.service.implement;
 
 import com.canchapp.CanchAPP_Back.dto.CanchaDTO;
-import com.canchapp.CanchAPP_Back.dto.EstablecimientoDTO;
 import com.canchapp.CanchAPP_Back.model.Cancha;
 import com.canchapp.CanchAPP_Back.model.Establecimiento;
 import com.canchapp.CanchAPP_Back.repository.CanchaRepository;
@@ -54,9 +53,16 @@ public class CanchaServiceImpl implements CanchaService {
       if (canchaDTO.getPrecioPorHora() == null || canchaDTO.getPrecioPorHora() < 0) {
         throw new RuntimeException("El precio por hora es obligatorio y no puede ser negativo");
       }
+      Integer idEstablecimiento = canchaDTO.getEstablecimiento().getEstablecimientoId();
+      // Validamos si ya existe ese código/nombre en este establecimiento específico
+      boolean existeCancha = canchaRepository.existsByEstablecimiento_EstablecimientoIdAndCodigoIgnoreCase(
+        idEstablecimiento, canchaDTO.getCodigo());
+
+      if (existeCancha) {
+        throw new RuntimeException("El establecimiento ya tiene registrada una cancha con el nombre/código: '" + canchaDTO.getCodigo() + "'");
+      }
 
       // Buscar el establecimiento en la Base de Datos
-      Integer idEstablecimiento = canchaDTO.getEstablecimiento().getEstablecimientoId();
       Establecimiento establecimientoExistente = establecimientoRepository.findById(idEstablecimiento)
         .orElseThrow(() -> new RuntimeException("Establecimiento no encontrado con ID: " + idEstablecimiento));
 
@@ -91,10 +97,26 @@ public class CanchaServiceImpl implements CanchaService {
       Cancha canchaExistente = canchaRepository.findById(id)
         .orElseThrow(() -> new RuntimeException("Cancha no encontrada con el ID: " + id));
 
-      // Actualizamos solo los datos permitidos
       if (canchaDTO.getCodigo() != null) {
+
+        //Verificamos si realmente le están cambiando el nombre
+        if (!canchaDTO.getCodigo().equalsIgnoreCase(canchaExistente.getCodigo())) {
+
+          //Extraemos el ID del establecimiento de la cancha que ya tenemos en BD
+          Integer idEstablecimiento = canchaExistente.getEstablecimiento().getEstablecimientoId();
+
+          //Validamos si ese NUEVO nombre ya está ocupado por otra cancha
+          boolean existeCancha = canchaRepository.existsByEstablecimiento_EstablecimientoIdAndCodigoIgnoreCase(
+            idEstablecimiento, canchaDTO.getCodigo());
+
+          if (existeCancha) {
+            throw new RuntimeException("El establecimiento ya tiene otra cancha con el nombre/código: '" + canchaDTO.getCodigo() + "'");
+          }
+        }
+        //Si pasó las validaciones (o si era el mismo nombre), lo actualizamos
         canchaExistente.setCodigo(canchaDTO.getCodigo());
       }
+
       if (canchaDTO.getEstado() != null) {
         canchaExistente.setEstado(canchaDTO.getEstado());
       }
@@ -136,14 +158,7 @@ public class CanchaServiceImpl implements CanchaService {
       //guardamos los cambios
       canchaRepository.save(cancha);
 
-        /* NOTA:
-           Si por alguna razón  exige un BORRADO FÍSICO
-           (borrar el dato permanentemente de la tabla), borrar las líneas
-           anteriores y solo usarías esta:
-           establecimientoRepository.delete(establecimiento);
-        */
-
-      return null; // Retornamos null porque la firma del método exige 'Void'
+      return null;
 
     } catch (Exception e) {
       System.out.println("Error al eliminar la cancha: " + e.getMessage());
@@ -172,15 +187,15 @@ public class CanchaServiceImpl implements CanchaService {
 
   @Override
   public List<CanchaDTO> obtenerPorEstablecimiento(Integer establecimientoId) {
-    // 1. Validamos opcionalmente si el establecimiento existe antes de buscar (Buena práctica)
+    //Validamos opcionalmente si el establecimiento existe antes de buscar (Buena práctica)
     if (!establecimientoRepository.existsById(establecimientoId)) {
       throw new RuntimeException("Establecimiento no encontrado con ID: " + establecimientoId);
     }
 
-    // 2. Buscamos las canchas usando nuestro repositorio mágico
+    //Buscamos las canchas usando nuestro repositorio mágico
     List<Cancha> canchas = canchaRepository.findByEstablecimiento_EstablecimientoId(establecimientoId);
 
-    // 3. Convertimos la lista de Entidades a lista de DTOs y la retornamos
+    //Convertimos la lista de Entidades a lista de DTOs y la retornamos
     return canchas.stream()
       .map(cancha -> modelMapper.map(cancha, CanchaDTO.class))
       .collect(Collectors.toList());

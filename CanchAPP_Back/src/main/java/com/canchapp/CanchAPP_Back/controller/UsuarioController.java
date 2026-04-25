@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/v1/api/usuarios")
 @CrossOrigin(origins = "*")
@@ -23,5 +25,23 @@ public class UsuarioController {
     } catch (RuntimeException e) {
       return ResponseEntity.badRequest().body(e.getMessage());
     }
+  }
+
+  @GetMapping("/jugadores")
+  public ResponseEntity<List<UsuarioDTO>> listarJugadores() {
+    List<UsuarioDTO> jugadores = usuarioService.listarJugadores();
+    return ResponseEntity.ok(jugadores);
+  }
+
+  @GetMapping("/{id}")
+  public ResponseEntity<UsuarioDTO> obtenerUsuarioPorId(@PathVariable Integer id) {
+    UsuarioDTO usuario = usuarioService.obtenerUsuarioPorId(id);
+    return ResponseEntity.ok(usuario);
+  }
+
+  @GetMapping("/mi-perfil")
+  public ResponseEntity<UsuarioDTO> obtenerMiPerfil() {
+    UsuarioDTO miPerfil = usuarioService.obtenerMiPerfil();
+    return ResponseEntity.ok(miPerfil);
   }
 }

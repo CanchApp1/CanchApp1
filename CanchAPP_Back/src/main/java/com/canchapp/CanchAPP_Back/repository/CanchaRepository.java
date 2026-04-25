@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface CanchaRepository extends JpaRepository<Cancha, Integer> {
   List<Cancha> findByEstablecimiento_EstablecimientoId(Integer establecimientoId);
+  boolean existsByEstablecimiento_EstablecimientoIdAndCodigoIgnoreCase(Integer establecimientoId, String codigo);
+
 }
