@@ -1,0 +1,8 @@
+Comentar dependecia de pom.xml de MySql y agregar dependencia de
+<dependency>
+    <groupId>org.postgresql</groupId>
+    <artifactId>postgresql</artifactId>
+    <scope>runtime</scope>
+</dependency>
+REALICE CAMBIOS EN EL APLICATION.PROPERTILES
+Comente los la conexion de mysql y la de JPA/Hibernate y agrege la nueva conexion a supaba postgresql

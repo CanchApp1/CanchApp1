@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  # 1. TU BACKEND (Spring Boot)
+  backend-canchapp:
+    build: ./CanchAPP_Back 
+    restart: unless-stopped
+    container_name: backend_canchapp
+    ports:
+      - "3601:8080" # Exponemos el 8080 por si necesitas pegarle a la API directo desde Postman
+    environment:
+      #conexion a supabase (session pooler)
+      SPRING_DATASOURCE_URL: jdbc:postgresql://aws-1-sa-east-1.pooler.supabase.com:5432/postgres
+      SPRING_DATASOURCE_USERNAME: postgres.vgxplgdphahdsqjbberj
+      SPRING_DATASOURCE_PASSWORD: C4nch42026//
+    networks:
+      - internal-canchapp
+
+  # 2. TU FRONTEND (React)
+  frontend-canchapp:
+    build: ./canchapp-frontend 
+    restart: unless-stopped
+    container_name: frontend_canchapp
+    ports:
+      - "3101:80" # En tu PC entrarás por http://localhost:5173
+    depends_on:
+      - backend-canchapp
+    networks:
+      - internal-canchapp
+
+networks:
+  internal-canchapp:
+    driver: bridge
