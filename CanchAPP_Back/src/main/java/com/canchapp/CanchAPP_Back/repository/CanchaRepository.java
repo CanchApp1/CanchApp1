@@ -6,7 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface CanchaRepository extends JpaRepository<Cancha, Integer> {
-  List<Cancha> findByEstablecimiento_EstablecimientoId(Integer establecimientoId);
+  List<Cancha> findByEstablecimiento_EstablecimientoIdAndEstadoActivoTrue(Integer establecimientoId);
   boolean existsByEstablecimiento_EstablecimientoIdAndCodigoIgnoreCase(Integer establecimientoId, String codigo);
+  List<Cancha> findByEstadoActivoTrue();
 
 }

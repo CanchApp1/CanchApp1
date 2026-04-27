@@ -26,7 +26,7 @@ public class CanchaServiceImpl implements CanchaService {
 
   @Override
   public List<CanchaDTO> obtenerTodos() {
-    List<CanchaDTO> canchas = canchaRepository.findAll()
+    List<CanchaDTO> canchas = canchaRepository.findByEstadoActivoTrue()
       .stream()
       .map(cancha -> modelMapper.map(cancha, CanchaDTO.class))
       .collect(Collectors.toList());
@@ -187,15 +187,13 @@ public class CanchaServiceImpl implements CanchaService {
 
   @Override
   public List<CanchaDTO> obtenerPorEstablecimiento(Integer establecimientoId) {
-    //Validamos opcionalmente si el establecimiento existe antes de buscar (Buena práctica)
     if (!establecimientoRepository.existsById(establecimientoId)) {
       throw new RuntimeException("Establecimiento no encontrado con ID: " + establecimientoId);
     }
 
-    //Buscamos las canchas usando nuestro repositorio mágico
-    List<Cancha> canchas = canchaRepository.findByEstablecimiento_EstablecimientoId(establecimientoId);
+    // 👇 Cambiamos el método por el que filtra por estado activo
+    List<Cancha> canchas = canchaRepository.findByEstablecimiento_EstablecimientoIdAndEstadoActivoTrue(establecimientoId);
 
-    //Convertimos la lista de Entidades a lista de DTOs y la retornamos
     return canchas.stream()
       .map(cancha -> modelMapper.map(cancha, CanchaDTO.class))
       .collect(Collectors.toList());
