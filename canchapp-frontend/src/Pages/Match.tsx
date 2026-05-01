@@ -1,6 +1,8 @@
 import Barra_de_navegacion from '../Components/Barra_navegacion';
 import MatchCard from '../Components/MatchCard';
+import ModalCrearMatch from '../Components/Formulario_match';
 import { Plus, Filter } from 'lucide-react';
+import { useState } from 'react';
 
 // --- DATOS DE PRUEBA (Simulando lo que vendría de una base de datos) ---
 const partidosPendientes = [
@@ -11,6 +13,7 @@ const partidosPendientes = [
 ];
 
 export default function Match() {
+    const [isModalOpen, setIsModalOpen] = useState(false);
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
             <Barra_de_navegacion />
@@ -29,11 +32,13 @@ export default function Match() {
                         <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-100 rounded-xl font-bold text-[#03292e] shadow-sm hover:shadow-md transition-all">
                             <Filter size={18} /> Filtros
                         </button>
-                        
-                        {/* Botón Crear Petición (Placeholder) */}
-                        <button className="flex items-center gap-2 px-6 py-2 bg-[#0ed1e8] text-[#03292e] rounded-xl font-black shadow-md hover:bg-[#0cbcd1] transition-all">
+                        <button 
+                            onClick={() => setIsModalOpen(true)}
+                            className="flex items-center gap-2 px-6 py-2 bg-[#0ed1e8] text-[#03292e] rounded-xl font-black shadow-md hover:bg-[#0cbcd1] transition-all"
+                        >
                             <Plus size={18} /> Crear Reto
                         </button>
+                        
                     </div>
                 </div>
 
@@ -62,6 +67,10 @@ export default function Match() {
                 {/* Margen extra al final para scroll cómodo */}
                 <div className="h-20" />
             </main>
+            <ModalCrearMatch 
+              isOpen={isModalOpen} 
+              onClose={() => setIsModalOpen(false)} 
+            />
         </div>
     );
 }

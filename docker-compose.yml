@@ -1,4 +1,3 @@
-version: '3.8'
 
 services:
   # 1. TU BACKEND (Spring Boot)
@@ -22,9 +21,9 @@ services:
     restart: unless-stopped
     container_name: frontend_canchapp
     ports:
-      - "3101:80" # En tu PC entrarás por http://localhost:5173
+      - "3101:80" # 
     depends_on:
-      - backend-canchapp
+      - backend-canchapp 
     networks:
       - internal-canchapp
 
