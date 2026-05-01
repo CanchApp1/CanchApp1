@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { UserCircle } from 'lucide-react'
 import Barra_perfil from './Barra_perfil'
+import logo from '../assets/Logo_solo.png'
 
 export default function Barra_de_navegacion() {
 
@@ -18,7 +19,7 @@ export default function Barra_de_navegacion() {
           className="flex items-center gap-3 hover:opacity-80 transition-opacity active:scale-95"
         >
           <img
-            src="/src/assets/Logo_solo.png"
+            src={logo}
             alt="Logo"
             className="h-10 w-10 object-contain"
           />

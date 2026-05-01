@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Barra_de_navegacion from '../Components/Barra_navegacion';
 import { CanchaCard } from '../Components/Canchas/CanchaCard';
 import { ReservationModal } from '../Components/Canchas/ReservationModal';
@@ -8,8 +9,18 @@ export default function CanchasPage() {
   // 1. Usamos nuestro Hook personalizado para los datos
   const { canchas, loading } = useCanchas();
 
+  const navigate = useNavigate();
   // 2. Estado para el Modal (Solo necesitamos saber qué cancha se seleccionó)
   const [selectedCancha, setSelectedCancha] = useState<any | null>(null);
+
+  const handleCanchaClick = (cancha: any) => {
+    const token = sessionStorage.getItem('token');
+    if (!token) {
+      navigate('/Login');
+    } else {
+      setSelectedCancha(cancha);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col relative">
@@ -30,7 +41,7 @@ export default function CanchasPage() {
               <CanchaCard
                 key={cancha.establecimientoId}
                 cancha={cancha}
-                onClick={() => setSelectedCancha(cancha)}
+                onClick={() => handleCanchaClick(cancha)}
               />
             ))}
           </div>

@@ -7,7 +7,7 @@ import api from './api';
 // 1. OBTENER horarios por establecimiento (READ)
 export const obtenerHorariosPorEstablecimiento = async (establecimientoId: number) => {
     try {
-        const response = await api.get(`/v1/api/horario/establecimiento/${establecimientoId}`);
+        const response = await api.get(`/horario/establecimiento/${establecimientoId}`);
         return response.data.objectResponse || [];
     } catch (error) {
         console.error(`Error obteniendo horarios (${establecimientoId}):`, error);
@@ -24,7 +24,7 @@ export const crearHorario = async (datos: {
     usuarioCreacion: string;
 }) => {
     try {
-        const response = await api.post('/v1/api/horario', datos);
+        const response = await api.post('/horario', datos);
         return response.data;
     } catch (error) {
         console.error('Error creando horario:', error);
@@ -41,7 +41,7 @@ export const actualizarHorario = async (horarioId: number, datos: {
     usuarioModificacion: string;
 }) => {
     try {
-        const response = await api.put(`/v1/api/horario/${horarioId}`, datos);
+        const response = await api.put(`/horario/${horarioId}`, datos);
         return response.data;
     } catch (error) {
         console.error('Error actualizando horario:', error);
@@ -52,7 +52,7 @@ export const actualizarHorario = async (horarioId: number, datos: {
 // 4. ELIMINAR un horario (DELETE)
 export const eliminarHorario = async (horarioId: number) => {
     try {
-        const response = await api.delete(`/v1/api/horario/${horarioId}`);
+        const response = await api.delete(`/horario/${horarioId}`);
         return response.data;
     } catch (error) {
         console.error('Error eliminando horario:', error);

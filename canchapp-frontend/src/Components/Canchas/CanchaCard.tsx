@@ -1,5 +1,6 @@
 // En: src/Components/CanchaCard.tsx
 import { MapPin, Clock, Star } from 'lucide-react';
+import fondoDefault from '../../assets/fondo_default.png';
 
 interface CanchaCardProps {
     cancha: any;
@@ -26,7 +27,7 @@ export const CanchaCard = ({ cancha, onClick }: CanchaCardProps) => {
     return (
         <div onClick={onClick} className="bg-white rounded-[2.5rem] overflow-hidden shadow-lg border border-gray-100 hover:shadow-2xl transition-all cursor-pointer group">
             <div className="relative h-60 overflow-hidden bg-[#03292e]">
-                <img src="/src/assets/fondo_default.jpg" alt={nombre} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                <img src={fondoDefault} alt={nombre} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                 <div className="absolute top-4 right-4 bg-[#0ed1e8] text-[#03292e] px-4 py-1 rounded-full text-xs font-bold z-20">Disponible</div>
             </div>
             <div className="p-6 space-y-4 bg-white">

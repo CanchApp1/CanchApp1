@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/set-state-in-effect */
-import { X, LogOut, Calendar, Trophy } from 'lucide-react' // Importamos Trophy
+import { X, LogOut, Calendar, Trophy } from 'lucide-react'
+import perfilIcono from '../assets/silueta.png'
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -74,7 +75,7 @@ export default function Barra_perfil({ isOpen, onClose }: BarraPerfilProps) {
         <div className="p-8 text-white mt-8 flex flex-col h-full text-center">
           <div className="flex flex-col items-center mb-10">
             <div className="relative">
-               <img src="/src/assets/perfil_icono.png" alt="Perfil" className="h-32 w-32 rounded-full border-4 border-[#0ed1e8] shadow-[0_0_15px_rgba(14,209,232,0.3)] object-cover" />
+               <img src={perfilIcono} alt="Perfil" className="h-32 w-32 rounded-full border-4 border-[#0ed1e8] shadow-[0_0_15px_rgba(14,209,232,0.3)] object-cover" />
                <div className="absolute bottom-1 right-1 bg-[#0ed1e8] h-6 w-6 rounded-full border-2 border-[#03292e]"></div>
             </div>
 

@@ -36,8 +36,10 @@ public class SecurityConfig {
             .authorizeHttpRequests(authRequest ->
                     authRequest
                             // 2. CORRECCIÓN VITAL: Tu React apuntaba a /v1/api/auth, así que debemos permitir esa ruta completa
-                            .requestMatchers(HttpMethod.GET, "/v1/api/establecimiento").permitAll()
-                            .requestMatchers(HttpMethod.POST, "/v1/api/establecimiento").permitAll()
+                            .requestMatchers("/v1/api/establecimiento/**").permitAll()
+                            .requestMatchers("/v1/api/cancha/**").permitAll()
+                            .requestMatchers("/v1/api/horario/**").permitAll()
+                            .requestMatchers("/v1/api/publicacion/**").permitAll()
                             .requestMatchers("/v1/api/auth/password/**").permitAll()
                             .requestMatchers("/v1/api/auth/**", "/auth/**").permitAll()
                             .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()

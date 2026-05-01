@@ -7,7 +7,7 @@ import api from './api';
 // 1. OBTENER canchas por establecimiento (READ)
 export const obtenerCanchasPorEstablecimiento = async (establecimientoId: number) => {
     try {
-        const response = await api.get(`/v1/api/cancha/establecimiento/${establecimientoId}`);
+        const response = await api.get(`/cancha/establecimiento/${establecimientoId}`);
         return response.data.objectResponse || [];
     } catch (error) {
         console.error(`Error obteniendo canchas (${establecimientoId}):`, error);
@@ -24,7 +24,7 @@ export const crearCancha = async (datos: {
     usuarioCreacion: string;
 }) => {
     try {
-        const response = await api.post('/v1/api/cancha', datos);
+        const response = await api.post('/cancha', datos);
         return response.data;
     } catch (error) {
         console.error('Error creando cancha:', error);
@@ -41,7 +41,7 @@ export const actualizarCancha = async (canchaId: number, datos: {
     usuarioModificacion: string;
 }) => {
     try {
-        const response = await api.put(`/v1/api/cancha/${canchaId}`, datos);
+        const response = await api.put(`/cancha/${canchaId}`, datos);
         return response.data;
     } catch (error) {
         console.error('Error actualizando cancha:', error);
@@ -52,7 +52,7 @@ export const actualizarCancha = async (canchaId: number, datos: {
 // 4. ELIMINAR una cancha (DELETE — soft delete)
 export const eliminarCancha = async (canchaId: number) => {
     try {
-        const response = await api.delete(`/v1/api/cancha/${canchaId}`);
+        const response = await api.delete(`/cancha/${canchaId}`);
         return response.data;
     } catch (error) {
         console.error('Error eliminando cancha:', error);

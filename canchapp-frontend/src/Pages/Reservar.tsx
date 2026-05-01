@@ -5,6 +5,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Barra_de_navegacion from '../Components/Barra_navegacion';
 import { MapPin, Star, CheckCircle2, ChevronLeft, CalendarDays, Timer, User ,Users, ArrowRight} from 'lucide-react';
+import estadioFondo from '../assets/estadio_fondo.jpg';
 
 export default function ReservarPage() {
   const location = useLocation();
@@ -20,10 +21,10 @@ export default function ReservarPage() {
   // --- ESTADOS ---
   const [canchaEspecifica, setCanchaEspecifica] = useState<number | null>(null);
   const [duracion, setDuracion] = useState<number>(1);
-  const [descripcion, setDescripcion] = useState("");
+  const [descripcion] = useState("");
   const [editFecha, setEditFecha] = useState(fecha);
   const [editHora, setEditHora] = useState(hora);
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
   const [userData, setUserData] = useState({ id: "", nombre: "", contacto: "" });
 
   // 2. CARGAR DATOS DEL USUARIO (Sincronizado con LoginPage)
@@ -126,7 +127,7 @@ export default function ReservarPage() {
 
       {/* HEADER */}
       <div className="relative h-60 w-full bg-[#03292e] shrink-0">
-        <img src={cancha.imagen || "/src/assets/estadio_fondo.jpg"} className="w-full h-full object-cover opacity-30" alt="Fondo" />
+        <img src={cancha.imagen || estadioFondo} className="w-full h-full object-cover opacity-30" alt="Fondo" />
         <div className="absolute inset-0 flex flex-col justify-end p-8 md:px-16 text-white bg-gradient-to-t from-[#03292e] to-transparent">
           <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-sm mb-4 hover:text-[#0ed1e8] w-fit">
             <ChevronLeft size={18} /> Volver
