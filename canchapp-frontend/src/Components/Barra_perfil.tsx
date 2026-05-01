@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/set-state-in-effect */
-import { X, LogOut, Calendar } from 'lucide-react' // Importamos Calendar
+import { X, LogOut, Calendar, Trophy } from 'lucide-react'
+import perfilIcono from '../assets/silueta.png'
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -74,7 +75,7 @@ export default function Barra_perfil({ isOpen, onClose }: BarraPerfilProps) {
         <div className="p-8 text-white mt-8 flex flex-col h-full text-center">
           <div className="flex flex-col items-center mb-10">
             <div className="relative">
-               <img src="/src/assets/perfil_icono.png" alt="Perfil" className="h-32 w-32 rounded-full border-4 border-[#0ed1e8] shadow-[0_0_15px_rgba(14,209,232,0.3)] object-cover" />
+               <img src={perfilIcono} alt="Perfil" className="h-32 w-32 rounded-full border-4 border-[#0ed1e8] shadow-[0_0_15px_rgba(14,209,232,0.3)] object-cover" />
                <div className="absolute bottom-1 right-1 bg-[#0ed1e8] h-6 w-6 rounded-full border-2 border-[#03292e]"></div>
             </div>
 
@@ -104,18 +105,35 @@ export default function Barra_perfil({ isOpen, onClose }: BarraPerfilProps) {
             <hr className="border-white/10 my-6" />
             
             {isLoggedIn && (
-              <button
-                onClick={() => {
-                  navigate('/MisReservas');
-                  onClose();
-                }}
-                className="w-full flex items-center gap-4 bg-white/5 hover:bg-[#0ed1e8] hover:text-[#03292e] p-4 rounded-2xl transition-all group font-semibold border border-white/5"
-              >
-                <div className="bg-[#0ed1e8]/10 group-hover:bg-white/20 p-2 rounded-lg">
-                  <Calendar size={22} className="text-[#0ed1e8] group-hover:text-[#03292e]" />
-                </div>
-                Mis Reservas
-              </button>
+              <>
+                {/* Botón: Mis Reservas */}
+                <button
+                  onClick={() => {
+                    navigate('/MisReservas');
+                    onClose();
+                  }}
+                  className="w-full flex items-center gap-4 bg-white/5 hover:bg-[#0ed1e8] hover:text-[#03292e] p-4 rounded-2xl transition-all group font-semibold border border-white/5"
+                >
+                  <div className="bg-[#0ed1e8]/10 group-hover:bg-white/20 p-2 rounded-lg">
+                    <Calendar size={22} className="text-[#0ed1e8] group-hover:text-[#03292e]" />
+                  </div>
+                  Mis Reservas
+                </button>
+
+                {/* NUEVO Botón: Mis Partidos */}
+                <button
+                  onClick={() => {
+                    navigate('/MisPartidos'); // Navega a la ruta de partidos
+                    onClose();
+                  }}
+                  className="w-full flex items-center gap-4 bg-white/5 hover:bg-[#0ed1e8] hover:text-[#03292e] p-4 rounded-2xl transition-all group font-semibold border border-white/5"
+                >
+                  <div className="bg-[#0ed1e8]/10 group-hover:bg-white/20 p-2 rounded-lg">
+                    <Trophy size={22} className="text-[#0ed1e8] group-hover:text-[#03292e]" />
+                  </div>
+                  Mis Partidos
+                </button>
+              </>
             )}
           </div>
 

@@ -9,6 +9,7 @@ import Reservar from './Pages/Reservar';
 import DashboardPropietario from './Pages/DashboardPropietario';
 import PagosPage from './Pages/Pagos';
 import MisReservas from './Pages/MisReservas';
+import MisPartidos from './Pages/MisPartidos';
 
 // --- COMPONENTE DE PROTECCIÓN DE RUTAS ---
 interface ProtectedRouteProps {
@@ -45,12 +46,12 @@ function App() {
           <Route path="/Registro" element={<Registro />} />
         </Route>
 
+        {/* Rutas Públicas de Jugador (Temporalmente para test) */}
+        <Route path="/CanchasPage" element={<CanchasPage />} />
+        <Route path="/Match" element={<Match />} />
+
         {/* Rutas protegidas para JUGADORES */}
-        <Route path="/CanchasPage" element={
-          <ProtectedRoute allowedRoles={['Jugador']}>
-            <CanchasPage />
-          </ProtectedRoute>
-        } />
+
 
         <Route path="/MisReservas" element={
           <ProtectedRoute allowedRoles={['Jugador']}>
@@ -64,15 +65,17 @@ function App() {
           </ProtectedRoute>
         } />
 
-        <Route path="/Match" element={
-          <ProtectedRoute allowedRoles={['Jugador']}>
-            <Match />
-          </ProtectedRoute>
-        } />
+
 
         <Route path="/Reservar" element={
           <ProtectedRoute allowedRoles={['Jugador']}>
             <Reservar />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/MisPartidos" element={
+          <ProtectedRoute allowedRoles={['Jugador']}>
+            <MisPartidos />
           </ProtectedRoute>
         } />
 
