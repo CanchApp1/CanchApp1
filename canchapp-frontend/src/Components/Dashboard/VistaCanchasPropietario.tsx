@@ -1,127 +1,108 @@
 import { useState } from 'react';
-import { crearCancha } from '../../services/canchaService';
+import { Plus } from 'lucide-react';
+import TarjetaCancha from './TarjetaCancha';
+import ModalCancha from './ModalCancha';
+
+// ============================================
+// VISTA CANCHAS PROPIETARIO
+// Orquesta la lista, el modal y las acciones
+// ============================================
 
 interface Props {
     canchas: any[];
     loading: boolean;
+    onCrear: (datos: { codigo: string; precioPorHora: number; estado: string }) => Promise<boolean | undefined>;
+    onEditar: (id: number, datos: { codigo: string; precioPorHora: number; estado: string }) => Promise<boolean | undefined>;
     onEliminar: (id: number) => void;
-    establecimientoId: number | null;
-    onCanchaCreada: () => void;
 }
 
-export default function VistaCanchasPropietario({ canchas, loading, onEliminar, establecimientoId, onCanchaCreada }: Props) {
-    const [mostrarModal, setMostrarModal] = useState(false);
-    const [guardando, setGuardando] = useState(false);
-    const [form, setForm] = useState({ codigo: '', precioPorHora: '' });
+export default function VistaCanchasPropietario({ canchas, loading, onCrear, onEditar, onEliminar }: Props) {
+    // Estado del modal
+    const [modalVisible, setModalVisible] = useState(false);
+    const [canchaSeleccionada, setCanchaSeleccionada] = useState<any>(null);
 
-    const handleCrear = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!establecimientoId) return alert("No se encontró el establecimiento.");
-        setGuardando(true);
-        try {
-            await crearCancha({
-                codigo: form.codigo,
-                precioPorHora: parseFloat(form.precioPorHora),
-                establecimiento: { establecimientoId }
-            });
-            alert("¡Cancha creada exitosamente!");
-            setMostrarModal(false);
-            setForm({ codigo: '', precioPorHora: '' });
-            onCanchaCreada();
-        } catch (error) {
-            alert("Error al crear la cancha. Intenta de nuevo.");
-        } finally {
-            setGuardando(false);
+    // Abrir modal para CREAR
+    const abrirCrear = () => {
+        setCanchaSeleccionada(null);
+        setModalVisible(true);
+    };
+
+    // Abrir modal para EDITAR
+    const abrirEditar = (cancha: any) => {
+        setCanchaSeleccionada(cancha);
+        setModalVisible(true);
+    };
+
+    // Cerrar modal
+    const cerrarModal = () => {
+        setModalVisible(false);
+        setCanchaSeleccionada(null);
+    };
+
+    // Manejar el guardado (decide si es crear o editar)
+    const handleGuardar = async (datos: { codigo: string; precioPorHora: number; estado: string }) => {
+        if (canchaSeleccionada) {
+            // MODO EDICIÓN
+            return await onEditar(canchaSeleccionada.canchaId, datos);
+        } else {
+            // MODO CREACIÓN
+            return await onCrear(datos);
         }
     };
 
     return (
         <div className="animate-in slide-in-from-right-4 duration-500">
+            {/* Cabecera */}
             <div className="flex justify-between items-end mb-8">
                 <div>
                     <h2 className="text-3xl font-black text-[#03292e] mb-2">Mis Canchas</h2>
-                    <p className="text-gray-500">Gestiona tus {canchas.length} escenarios deportivos.</p>
+                    <p className="text-gray-500">
+                        Gestiona tus <span className="font-bold text-[#0ed1e8]">{canchas.length}</span> escenarios deportivos.
+                    </p>
                 </div>
                 <button
-                    onClick={() => setMostrarModal(true)}
-                    className="bg-[#03292e] text-white px-6 py-3 rounded-2xl font-bold hover:bg-[#0a4149] transition-all shadow-lg active:scale-95">
-                    + Agregar Cancha
+                    onClick={abrirCrear}
+                    className="flex items-center gap-2 bg-[#03292e] text-white px-6 py-3 rounded-2xl font-bold hover:bg-[#0a4149] transition-all shadow-lg active:scale-95"
+                >
+                    <Plus size={18} />
+                    Agregar Cancha
                 </button>
             </div>
 
-            {/* MODAL */}
-            {mostrarModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white p-8 rounded-[2.5rem] shadow-2xl w-full max-w-md">
-                        <h3 className="text-2xl font-black text-[#03292e] mb-6">Nueva Cancha</h3>
-                        <form onSubmit={handleCrear} className="space-y-4">
-                            <div>
-                                <label className="text-sm font-bold text-gray-600 ml-1">Código / Nombre</label>
-                                <input
-                                    type="text"
-                                    value={form.codigo}
-                                    onChange={e => setForm({ ...form, codigo: e.target.value })}
-                                    required
-                                    placeholder="Ej: CANCHA-A"
-                                    className="w-full mt-1 px-4 py-3 bg-[#e6effc] rounded-2xl border-2 border-transparent focus:border-[#0ed1e8] outline-none font-medium"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-sm font-bold text-gray-600 ml-1">Precio por hora</label>
-                                <input
-                                    type="number"
-                                    value={form.precioPorHora}
-                                    onChange={e => setForm({ ...form, precioPorHora: e.target.value })}
-                                    required
-                                    placeholder="Ej: 50000"
-                                    className="w-full mt-1 px-4 py-3 bg-[#e6effc] rounded-2xl border-2 border-transparent focus:border-[#0ed1e8] outline-none font-medium"
-                                />
-                            </div>
-                            <div className="flex gap-3 pt-2">
-                                <button type="button" onClick={() => setMostrarModal(false)}
-                                    className="flex-1 bg-gray-100 py-3 rounded-2xl font-bold text-gray-600 hover:bg-gray-200">
-                                    Cancelar
-                                </button>
-                                <button type="submit" disabled={guardando}
-                                    className="flex-1 bg-[#03292e] text-white py-3 rounded-2xl font-bold hover:bg-[#0a4149] disabled:opacity-50">
-                                    {guardando ? 'Guardando...' : 'Crear Cancha'}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
+            {/* Contenido */}
             {loading ? (
-                <div className="flex flex-col items-center py-20 animate-pulse">
-                    <div className="w-12 h-12 bg-gray-200 rounded-full mb-4"></div>
+                <div className="flex flex-col items-center py-20">
+                    <div className="w-14 h-14 border-4 border-[#0ed1e8]/30 border-t-[#0ed1e8] rounded-full animate-spin mb-4" />
                     <p className="text-gray-400 font-medium">Cargando inventario...</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {canchas.map((cancha) => (
-                        <div key={cancha.canchaId} className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                            <h4 className="font-black text-xl text-[#03292e] uppercase mb-1">{cancha.codigo}</h4>
-                            <p className="text-[#0ed1e8] font-bold text-lg mb-4">${cancha.precioPorHora} / hora</p>
-                            <div className="flex gap-3">
-                                <button className="flex-1 bg-gray-100 py-3 rounded-2xl text-sm font-bold text-gray-600 hover:bg-gray-200 transition-colors">
-                                    Editar
-                                </button>
-                                <button onClick={() => onEliminar(cancha.canchaId)}
-                                    className="flex-1 bg-red-50 py-3 rounded-2xl text-sm font-bold text-red-500 hover:bg-red-100 transition-colors">
-                                    Eliminar
-                                </button>
-                            </div>
-                        </div>
+                        <TarjetaCancha
+                            key={cancha.canchaId}
+                            cancha={cancha}
+                            onEditar={abrirEditar}
+                            onEliminar={onEliminar}
+                        />
                     ))}
+
                     {canchas.length === 0 && (
                         <div className="col-span-full py-24 text-center border-2 border-dashed border-gray-200 rounded-[3rem]">
+                            <p className="text-5xl mb-4">🏟️</p>
                             <p className="text-gray-400 font-bold text-lg">No tienes canchas registradas aún.</p>
-                            <p className="text-gray-300">Empieza agregando tu primera cancha arriba.</p>
+                            <p className="text-gray-300 mt-1">Empieza agregando tu primera cancha arriba.</p>
                         </div>
                     )}
                 </div>
             )}
+
+            {/* Modal de Crear / Editar */}
+            <ModalCancha
+                visible={modalVisible}
+                onCerrar={cerrarModal}
+                onGuardar={handleGuardar}
+                canchaEditar={canchaSeleccionada}
+            />
         </div>
     );
 }

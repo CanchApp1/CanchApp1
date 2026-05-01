@@ -9,6 +9,7 @@ import Reservar from './Pages/Reservar';
 import DashboardPropietario from './Pages/DashboardPropietario';
 import PagosPage from './Pages/Pagos';
 import MisReservas from './Pages/MisReservas';
+import MisPartidos from './Pages/MisPartidos';
 
 // --- COMPONENTE DE PROTECCIÓN DE RUTAS ---
 interface ProtectedRouteProps {
@@ -73,6 +74,12 @@ function App() {
         <Route path="/Reservar" element={
           <ProtectedRoute allowedRoles={['Jugador']}>
             <Reservar />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/MisPartidos" element={
+          <ProtectedRoute allowedRoles={['Jugador']}>
+            <MisPartidos />
           </ProtectedRoute>
         } />
 

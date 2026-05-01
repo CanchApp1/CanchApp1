@@ -1,21 +1,27 @@
-import axios from 'axios';
+import axios from "axios";
 
-const API_BASE_URL = '/api';
-
-const instance = axios.create({
-  baseURL: API_BASE_URL,
+const api = axios.create({
+  baseURL: "http://localhost:8080",
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
-//Cambio realizado por andres, en la forma que toma el token despues del login a sessionstorage
-instance.interceptors.request.use((config) => {
-  const token = sessionStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+// Interceptor para inyectar el token
+api.interceptors.request.use(
+  (config) => {
+    // CAMBIO AQUÍ: Leemos desde sessionStorage
+    const token = sessionStorage.getItem('token');
 
-export default instance;
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+export default api;
