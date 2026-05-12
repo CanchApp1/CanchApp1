@@ -23,4 +23,7 @@ public interface ReservaService {
   List<ReservaDTO> obtenerHistorialPorUsuario(Integer idUsuario);
 
   ReservaDTO crearReservaAdmin(ReservaDTO reservaDTO);
+
+  // Nuevo método para listar reservas por cancha
+  List<ReservaDTO> obtenerPorCancha(Integer canchaId);
 }

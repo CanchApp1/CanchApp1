@@ -87,4 +87,14 @@ public class ReservaController {
     ReservaDTO nuevaReserva = reservaService.crearReservaAdmin(reservaDTO);
     return ResponseEntity.ok(nuevaReserva);
   }
+
+  /**
+   * Endpoint para listar las reservas de una cancha en específico.
+   * Protegido: Solo el dueño de la cancha puede verlas.
+   * GET: /api/reservas/cancha/{canchaId}
+   */
+  @GetMapping("/cancha/{canchaId}")
+  public ResponseEntity<List<ReservaDTO>> listarPorCancha(@PathVariable Integer canchaId) {
+    return ResponseEntity.ok(reservaService.obtenerPorCancha(canchaId));
+  }
 }
