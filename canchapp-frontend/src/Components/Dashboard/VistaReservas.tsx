@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Search, Filter, Calendar, User, Clock, CheckCircle2 } from 'lucide-react';
+import { Search, Filter, Calendar, Clock } from 'lucide-react';
 
 interface Props {
     reservas: any[];
