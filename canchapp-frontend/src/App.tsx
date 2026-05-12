@@ -10,6 +10,7 @@ import DashboardPropietario from './Pages/DashboardPropietario';
 import PagosPage from './Pages/Pagos';
 import MisReservas from './Pages/MisReservas';
 import MisPartidos from './Pages/MisPartidos';
+import RecuperarPassword from './Pages/RecuperarPassword'; // <--- Importamos la nueva página
 
 // --- COMPONENTE DE PROTECCIÓN DE RUTAS ---
 interface ProtectedRouteProps {
@@ -21,16 +22,13 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
   const token = sessionStorage.getItem('token');
   const userRole = sessionStorage.getItem('userRole');
 
-  // 1. Si no hay token, al login
   if (!token) return <Navigate to="/Login" replace />;
 
-  // 2. Si el rol no está permitido para esta ruta, al home
   if (!allowedRoles.includes(userRole || '')) {
     alert("No tienes permiso para acceder a esta sección");
     return <Navigate to="/" replace />;
   }
 
-  // 3. Si todo cumple, mostrar el componente
   return <>{children}</>;
 };
 
@@ -41,9 +39,12 @@ function App() {
         {/* Rutas Públicas */}
         <Route path="/" element={<Home />} />
 
+        {/* Rutas de Autenticación (Envueltas en el mismo layout) */}
         <Route element={<Autenticacion />}>
           <Route path="/Login" element={<LoginPage />} />
           <Route path="/Registro" element={<Registro />} />
+          {/* NUEVA RUTA: Recuperar Password */}
+          <Route path="/recuperar-password" element={<RecuperarPassword />} />
         </Route>
 
         {/* Rutas Públicas de Jugador (Temporalmente para test) */}
@@ -51,8 +52,6 @@ function App() {
         <Route path="/Match" element={<Match />} />
 
         {/* Rutas protegidas para JUGADORES */}
-
-
         <Route path="/MisReservas" element={
           <ProtectedRoute allowedRoles={['Jugador']}>
             <MisReservas />
@@ -64,8 +63,6 @@ function App() {
             <PagosPage />
           </ProtectedRoute>
         } />
-
-
 
         <Route path="/Reservar" element={
           <ProtectedRoute allowedRoles={['Jugador']}>

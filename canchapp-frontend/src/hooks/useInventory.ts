@@ -26,12 +26,8 @@ export const useInventory = (establecimientoId: number | null) => {
         try {
             const data = await obtenerCanchasPorEstablecimiento(establecimientoId);
 
-            // Filtramos: solo mostramos canchas con estado activo
-            const activas = data.filter((cancha: any) =>
-                cancha.estado === '1' || cancha.estado === true || cancha.estado === 1
-            );
-
-            setCanchas(activas);
+            console.log("Datos brutos del backend:", data); // Mira esto en la consola
+            setCanchas(data);
         } catch (error) {
             console.error('Error en useInventory (fetch):', error);
         } finally {

@@ -31,7 +31,7 @@ export default function ReservarPage() {
   useEffect(() => {
     const id = sessionStorage.getItem('userId');
     const nombre = sessionStorage.getItem('userName'); 
-    const email = sessionStorage.getItem('email');
+    const email = sessionStorage.getItem('userEmail');
 
     if (nombre) {
       setUserData({
@@ -43,15 +43,22 @@ export default function ReservarPage() {
   }, []);
 
   // --- LÓGICA DE PRECIO ---
+  // --- LÓGICA DE PRECIO DINÁMICA ---
   const precioFinal = useMemo(() => {
-  if (!cancha || !cancha.precio) return 0;
-  const precioLimpio = cancha.precio.toString().replace(/[$. ]/g, '');
-  const precioBase = parseInt(precioLimpio) || 0;
-  
-  return precioBase * duracion;
-}, [cancha, duracion]);
+      const canchaSeleccionadaData = cancha.canchas?.find(
+        (c: any) => c.canchaId === canchaEspecifica
+      );
 
-  // --- FUNCIÓN PARA CONFIRMAR RESERVA (USANDO EL SERVICIO) ---
+      if (!canchaSeleccionadaData) {
+        const precioBaseSugerido = cancha.canchas?.[0]?.precioPorHora || 0;
+        return precioBaseSugerido * duracion;
+      }
+
+      const precioReal = canchaSeleccionadaData.precioPorHora;
+      
+    return precioReal * duracion;
+  }, [cancha, canchaEspecifica, duracion]); 
+
   // --- FUNCIÓN PARA CONFIRMAR RESERVA (AHORA NAVEGA A PAGOS) ---
   const handleConfirmarReserva = () => {
     // 1. Recuperar datos de sesión
@@ -90,8 +97,8 @@ export default function ReservarPage() {
       horaFin: horaFinCalculada,       
       duracionHoras: Number(duracion),
       precioTotal: Number(precioFinal),
-      descripcion: descripcion || "Reserva desde CanchAPP",
-      estadoReserva: "PENDIENTE",
+      descripcion: descripcion || `Reserva hecha por ${userData.nombre}` ,
+      estadoReserva: "CONFIRMADA",
       estadoActivo: true
       
     };

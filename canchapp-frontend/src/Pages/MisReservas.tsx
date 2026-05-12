@@ -21,6 +21,7 @@ export default function MisReservas() {
 
                 if (userId) {
                     const data = await obtenerMisReservas(userId);
+                            
                     setReservas(data);
                     console.log("Reservas obtenidas para la UI:", data);
                 }
@@ -71,12 +72,9 @@ export default function MisReservas() {
                                 
                                 {/* Badge de Estado Dinámico */}
                                 <div className="flex justify-between items-start mb-6 z-10">
-                                    <span className={`text-[10px] font-black uppercase px-4 py-1.5 rounded-full shadow-lg ${
-                                        reserva.estadoReserva === 'CONFIRMADA' 
-                                        ? 'bg-[#0ed1e8] text-[#03292e] shadow-[#0ed1e8]/20' 
-                                        : 'bg-yellow-500 text-black'
-                                    }`}>
-                                        {reserva.estadoReserva || 'PENDIENTE'}
+                    
+                                    <span className="text-[10px] font-black uppercase px-4 py-1.5 rounded-full shadow-lg bg-[#0ed1e8] text-[#03292e] shadow-[#0ed1e8]/20">
+                                        Confirmada
                                     </span>
                                     <CheckCircle2 className="text-[#0ed1e8] opacity-50 group-hover:opacity-100 transition-opacity" size={24} />
                                 </div>
