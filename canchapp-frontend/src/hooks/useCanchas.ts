@@ -21,10 +21,22 @@ export const useCanchas = () => {
                             obtenerCanchasPorEstablecimiento(id),
                             obtenerHorariosPorEstablecimiento(id)
                         ]);
-                        return { ...est, canchas: resCanchas || [], horarios: resHorarios || [] };
+
+                        // Filtramos para que el jugador solo vea canchas OPERATIVAS
+                        const canchasActivas = (resCanchas || []).filter((c: any) => 
+                            c.estado === '1' || 
+                            c.estado === 'ACTIVA' || 
+                            c.estado === true
+                        );
+
+                        return { ...est, canchas: canchasActivas, horarios: resHorarios || [] };
                     })
                 );
-                setCanchas(detalladas);
+
+                // FILTRO DEFINITIVO: Si el establecimiento se quedó sin canchas activas, lo ocultamos
+                const finales = detalladas.filter(est => est.canchas.length > 0);
+                
+                setCanchas(finales);
             } catch (error) {
                 console.error("Error cargando canchas:", error);
             } finally {

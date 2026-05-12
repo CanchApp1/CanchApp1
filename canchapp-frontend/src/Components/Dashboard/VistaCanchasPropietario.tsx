@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import TarjetaCancha from './TarjetaCancha';
 import ModalCancha from './ModalCancha';
 
@@ -20,6 +20,12 @@ export default function VistaCanchasPropietario({ canchas, loading, onCrear, onE
     // Estado del modal
     const [modalVisible, setModalVisible] = useState(false);
     const [canchaSeleccionada, setCanchaSeleccionada] = useState<any>(null);
+    const [busqueda, setBusqueda] = useState(''); // Estado para el buscador
+
+    // Filtrar canchas según la búsqueda
+    const canchasFiltradas = canchas.filter(c => 
+        c.codigo?.toLowerCase().includes(busqueda.toLowerCase())
+    );
 
     // Abrir modal para CREAR
     const abrirCrear = () => {
@@ -69,6 +75,18 @@ export default function VistaCanchasPropietario({ canchas, loading, onCrear, onE
                 </button>
             </div>
 
+            {/* Barra de Búsqueda (CAN 34) */}
+            <div className="relative mb-8 group">
+                <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#0ed1e8] transition-colors" size={20} />
+                <input 
+                    type="text" 
+                    placeholder="Buscar por código de cancha..." 
+                    value={busqueda}
+                    onChange={(e) => setBusqueda(e.target.value)}
+                    className="w-full pl-14 pr-6 py-4 bg-white border-2 border-gray-100 rounded-[2rem] outline-none focus:border-[#0ed1e8] focus:shadow-lg transition-all font-medium text-[#03292e]"
+                />
+            </div>
+
             {/* Contenido */}
             {loading ? (
                 <div className="flex flex-col items-center py-20">
@@ -77,7 +95,7 @@ export default function VistaCanchasPropietario({ canchas, loading, onCrear, onE
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {canchas.map((cancha) => (
+                    {canchasFiltradas.map((cancha) => (
                         <TarjetaCancha
                             key={cancha.canchaId}
                             cancha={cancha}

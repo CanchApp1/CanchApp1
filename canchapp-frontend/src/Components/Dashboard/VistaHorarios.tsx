@@ -66,6 +66,10 @@ export default function VistaHorarios({ horarios, loading, diasSinHorario, onCre
             return;
         }
 
+        if (!window.confirm(`¿Estás seguro de que deseas guardar este horario para el ${DIAS_ESPANOL[formData.diaSemana]}?`)) {
+            return;
+        }
+
         setGuardando(true);
         setError('');
 

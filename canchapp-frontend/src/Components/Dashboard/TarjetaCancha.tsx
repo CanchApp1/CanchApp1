@@ -12,7 +12,8 @@ interface Props {
 }
 
 export default function TarjetaCancha({ cancha, onEditar, onEliminar }: Props) {
-const esActiva = cancha.estado === 'ACTIVA' || cancha.estado === '1' || cancha.estado === true || cancha.estado === 1;    return (
+    const esActiva = cancha.estado === 'ACTIVA' || cancha.estado === '1' || cancha.estado === true || cancha.estado === 1;
+    return (
         <div className={`group bg-white p-6 rounded-3xl shadow-sm border border-gray-100 transition-all ${
             !esActiva ? 'opacity-60 grayscale-[0.5]' : ''
         }`}>

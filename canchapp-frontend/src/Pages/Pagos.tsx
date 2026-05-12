@@ -14,6 +14,7 @@ export default function PagosPage() {
     const { reservaDTO, cancha, fecha, hora, precioAMostrar } = location.state || {};
     const [procesando, setProcesando] = useState(false);
     const [pagoExitoso, setPagoExitoso] = useState(false);
+    const [confirmado, setConfirmado] = useState(false); // Nuevo estado para confirmación
     const montoFinal = precioAMostrar || reservaDTO?.precio || 0; 
     const [form, setForm] = useState({
         numero: '',
@@ -51,6 +52,12 @@ export default function PagosPage() {
 
     const handleSimularPago = async (e: React.FormEvent) => {
         e.preventDefault();
+        
+        if (!confirmado) {
+            // Si no ha confirmado el monto, no procesamos aún
+            return;
+        }
+
         setProcesando(true);
 
         try {
@@ -190,24 +197,49 @@ export default function PagosPage() {
                             </div>
                         </div>
 
-                        <button
-                            disabled={procesando}
-                            type="submit"
-                            className={`w-full py-4 rounded-2xl font-black text-lg transition-all shadow-lg flex items-center justify-center gap-3 ${
-                                procesando 
-                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
-                                : 'bg-[#0ed1e8] text-[#03292e] hover:bg-[#0bc0d5] active:scale-95'
-                            }`}
-                        >
-                            {procesando ? (
-                                <>
-                                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#03292e]"></div>
-                                    Procesando Pago...
-                                </>
-                            ) : (
-                                `Pagar $${formatCurrency(precioAMostrar || 0)}`
-                            )}
-                        </button>
+                        {!confirmado ? (
+                            <button
+                                type="button"
+                                onClick={() => setConfirmado(true)}
+                                className="w-full py-4 rounded-2xl font-black text-lg bg-[#03292e] text-white hover:bg-[#0a4149] transition-all shadow-lg active:scale-95"
+                            >
+                                Revisar Pago
+                            </button>
+                        ) : (
+                            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
+                                <div className="bg-yellow-50 border-2 border-yellow-100 p-4 rounded-2xl text-center">
+                                    <p className="text-[#03292e] font-bold text-sm">¿Estás seguro de pagar <span className="text-lg font-black">${formatCurrency(precioAMostrar || 0)}</span>?</p>
+                                    <p className="text-[10px] text-gray-500 mt-1 uppercase font-black">Esta acción no se puede deshacer</p>
+                                </div>
+                                <div className="flex gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setConfirmado(false)}
+                                        className="flex-1 py-4 rounded-2xl font-bold text-gray-400 hover:text-gray-600 transition-all"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        disabled={procesando}
+                                        type="submit"
+                                        className={`flex-[2] py-4 rounded-2xl font-black text-lg transition-all shadow-lg flex items-center justify-center gap-3 ${
+                                            procesando 
+                                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                                            : 'bg-[#0ed1e8] text-[#03292e] hover:bg-[#0bc0d5] active:scale-95'
+                                        }`}
+                                    >
+                                        {procesando ? (
+                                            <>
+                                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#03292e]"></div>
+                                                Procesando...
+                                            </>
+                                        ) : (
+                                            "Confirmar y Pagar"
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                         
                         <p className="text-[10px] text-center text-gray-400 px-6 italic">
                             Transacción segura protegida por encriptación SSL de 256 bits.
