@@ -1,6 +1,9 @@
-// En src/hooks/useReservasAdmin.ts
 import { useState, useEffect } from 'react';
-import { obtenerReservasPorEstablecimiento } from '../services/reservaService';
+import {
+    obtenerReservasPorEstablecimiento,
+    cancelarReserva as cancelarReservaService,
+    crearReservaAdmin as crearReservaAdminService,
+} from '../services/reservaService';
 
 export function useReservasAdmin(establecimientoId: number | null) {
     const [reservas, setReservas] = useState<any[]>([]);
@@ -19,5 +22,15 @@ export function useReservasAdmin(establecimientoId: number | null) {
         setLoading(false);
     };
 
-    return { reservas, loading, refrescar: cargarReservas };
+    const cancelarReserva = async (id: number) => {
+        await cancelarReservaService(id);
+        await cargarReservas();
+    };
+
+    const crearReserva = async (data: Parameters<typeof crearReservaAdminService>[0]) => {
+        await crearReservaAdminService(data);
+        await cargarReservas();
+    };
+
+    return { reservas, loading, refrescar: cargarReservas, cancelarReserva, crearReserva };
 }

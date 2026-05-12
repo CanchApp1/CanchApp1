@@ -41,7 +41,7 @@ export default function DashboardPropietario() {
     const { canchas, loading: loadingCanchas, addCancha, updateCancha, deleteCancha } = useInventory(realEstId);
     const { horarios, loading: loadingHorarios, diasSinHorario, addHorario, updateHorario, deleteHorario } = useHorarios(realEstId);
     const { establecimiento, loading: loadingConfig } = useEstablecimiento(userId);
-    const { reservas, loading: loadingResGlobal } = useReservasAdmin(realEstId);
+    const { reservas, loading: loadingResGlobal, cancelarReserva, crearReserva } = useReservasAdmin(realEstId);
 
     return (
         <div className="flex min-h-screen bg-gray-50">
@@ -71,9 +71,14 @@ export default function DashboardPropietario() {
 
                     {/* NUEVA SECCIÓN RESERVAS */}
                     {seccionActiva === 'reservas' && (
-                        <VistaReservas 
-                            reservas={reservas} 
-                            loading={loadingResGlobal} 
+                        <VistaReservas
+                            reservas={reservas}
+                            loading={loadingResGlobal}
+                            adminUserId={userId}
+                            canchas={canchas}
+                            establecimientoId={realEstId ?? 0}
+                            onCancelar={cancelarReserva}
+                            onCrear={crearReserva}
                         />
                     )}
 

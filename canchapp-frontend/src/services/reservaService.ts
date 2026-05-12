@@ -67,12 +67,63 @@ export const obtenerMisReservas = async (userId: number) => {
 
 export const obtenerReservasPorEstablecimiento = async (idEst: number) => {
     try {
-        // URL basada en tu Excel de Administrador
         const response = await api.get(`/reserva/establecimiento/${idEst}`);
-        // Según el formato de salida de tu Excel, los datos vienen en objectResponse
         return response.data.objectResponse || [];
     } catch (error) {
         console.error("Error al obtener reservas del establecimiento:", error);
         return [];
+    }
+};
+
+export const cancelarReserva = async (id: number) => {
+    try {
+        const response = await api.put(`/reserva/${id}`, { estadoReserva: 'CANCELADA' });
+        return response.data;
+    } catch (error) {
+        console.error("Error al cancelar la reserva:", error);
+        throw error;
+    }
+};
+
+export const obtenerHorasDisponiblesFin = async (canchaId: number, fecha: string, horaInicio: string) => {
+    try {
+        // Backend expects HH:mm format
+        const horaInicioFmt = horaInicio.slice(0, 5);
+        const response = await api.get('/reserva/disponibles/fin', {
+            params: { canchaId, fecha, horaInicio: horaInicioFmt }
+        });
+        const data = response.data.objectResponse || [];
+        return data.map((item: any) => {
+            if (typeof item === 'string') return item;
+            const h = String(item.hour ?? '00').padStart(2, '0');
+            const m = String(item.minute ?? '00').padStart(2, '0');
+            const s = String(item.second ?? '00').padStart(2, '0');
+            return `${h}:${m}:${s}`;
+        });
+    } catch (error) {
+        console.error("Error obteniendo horas fin:", error);
+        return [];
+    }
+};
+
+export const crearReservaAdmin = async (data: {
+    canchaId: number;
+    fecha: string;
+    horaInicio: string;
+    horaFin: string;
+    descripcion: string;
+}) => {
+    try {
+        const response = await api.post('/reserva/admin', {
+            cancha: { canchaId: data.canchaId },
+            fecha: data.fecha,
+            horaInicio: data.horaInicio,
+            horaFin: data.horaFin,
+            descripcion: data.descripcion,
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error al crear reserva admin:", error);
+        throw error;
     }
 };
