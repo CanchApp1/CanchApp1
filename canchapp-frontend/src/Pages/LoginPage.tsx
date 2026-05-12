@@ -129,6 +129,17 @@ export default function LoginPage() {
             </div>
           </div>
 
+          {/*Recuperar contraseña */}
+          <div className="w-full flex justify-end px-2 mt-2">
+            <button 
+              type="button"
+              onClick={() => navigate('/recuperar-password')}
+              className="text-sm font-bold text-[#0ed1e8] hover:text-[#03292e] transition-colors"
+            >
+              ¿Olvidaste tu contraseña?
+            </button>
+          </div>
+
           <button type="submit" className="w-full bg-[#03292e] text-white py-4 rounded-full font-bold hover:bg-[#0a4149] transition-all mt-4 shadow-lg active:scale-95">
             Entrar
           </button>

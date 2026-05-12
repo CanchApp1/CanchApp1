@@ -5,6 +5,7 @@ import { useInventory } from '../hooks/useInventory';
 import { useHorarios } from '../hooks/useHorarios';
 import { useEstablecimiento } from '../hooks/useEstablecimiento';
 import { obtenerMiEstablecimiento } from '../services/establecimientoService';
+import { useReservasAdmin } from '../hooks/useReservaAdmin'; // Hook que creamos antes
 
 // Componentes del Dashboard
 import CabeceraBienvenida from '../Components/Dashboard/CabeceraBienvenida';
@@ -12,6 +13,7 @@ import PanelEstadisticas from '../Components/Dashboard/PanelEstadisticas';
 import VistaCanchasPropietario from '../Components/Dashboard/VistaCanchasPropietario';
 import VistaHorarios from '../Components/Dashboard/VistaHorarios';
 import VistaConfiguracion from '../Components/Dashboard/VistaConfiguracion';
+import VistaReservas from '../Components/Dashboard/VistaReservas';
 
 // ============================================
 // DASHBOARD PROPIETARIO — Página principal
@@ -39,6 +41,7 @@ export default function DashboardPropietario() {
     const { canchas, loading: loadingCanchas, addCancha, updateCancha, deleteCancha } = useInventory(realEstId);
     const { horarios, loading: loadingHorarios, diasSinHorario, addHorario, updateHorario, deleteHorario } = useHorarios(realEstId);
     const { establecimiento, loading: loadingConfig } = useEstablecimiento(userId);
+    const { reservas, loading: loadingResGlobal } = useReservasAdmin(realEstId);
 
     return (
         <div className="flex min-h-screen bg-gray-50">
@@ -66,8 +69,16 @@ export default function DashboardPropietario() {
                         />
                     )}
 
-                    {/* ─── SECCIÓN RESERVAS / HORARIOS ───── */}
+                    {/* NUEVA SECCIÓN RESERVAS */}
                     {seccionActiva === 'reservas' && (
+                        <VistaReservas 
+                            reservas={reservas} 
+                            loading={loadingResGlobal} 
+                        />
+                    )}
+
+                    {/* ─── SECCIÓN RESERVAS / HORARIOS ───── */}
+                    {seccionActiva === 'horarios' && (
                         <VistaHorarios
                             horarios={horarios}
                             loading={loadingHorarios}

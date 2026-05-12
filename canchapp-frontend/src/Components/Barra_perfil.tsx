@@ -1,8 +1,9 @@
 /* eslint-disable react-hooks/set-state-in-effect */
-import { X, LogOut, Calendar, Trophy } from 'lucide-react'
+import { X, LogOut, Calendar, Trophy, Phone } from 'lucide-react'
 import perfilIcono from '../assets/silueta.png'
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { obtenerUsuarioPorId } from '../services/usuarioService' // Asegúrate de crear este archivo
 
 interface BarraPerfilProps {
   isOpen: boolean;
@@ -15,17 +16,15 @@ export default function Barra_perfil({ isOpen, onClose }: BarraPerfilProps) {
   const [userInfo, setUserInfo] = useState({
     nombre: 'Usuario',
     rol: 'Invitado',
-    correo: ''
+    correo: '',
+    telefono: ''
   });
 
   useEffect(() => {
+    // Solo ejecutamos la lógica si la barra se está abriendo
     if (!isOpen) return;
 
     const token = sessionStorage.getItem('token');
-    
-    let nombreObtenido = 'Usuario';
-    let rolObtenido = 'Invitado';
-    let correoObtenido = '';
 
     if (token) {
       setIsLoggedIn(true);
@@ -33,25 +32,51 @@ export default function Barra_perfil({ isOpen, onClose }: BarraPerfilProps) {
         const payloadStr = atob(token.split('.')[1]);
         const payload = JSON.parse(payloadStr);
 
-        nombreObtenido = payload.nombre_completo || 'Usuario';
-        rolObtenido = payload.perfil || 'Jugador';
-        correoObtenido = payload.sub || '';
+        // 1. Cargamos lo que viene en el token inmediatamente
+        const nombreObtenido = payload.nombre_completo || 'Usuario';
+        const rolObtenido = payload.perfil || 'Jugador';
+        const correoObtenido = payload.sub || '';
+        const userId = payload.userId; // Extraemos el ID para la consulta
 
+        setUserInfo(prev => ({
+          ...prev,
+          nombre: nombreObtenido,
+          rol: rolObtenido,
+          correo: correoObtenido
+        }));
+
+        // Guardamos en sessionStorage para otros componentes
         sessionStorage.setItem('userName', nombreObtenido);
         sessionStorage.setItem('userRole', rolObtenido);
+
+        // 2. Consulta al Controller de Usuario para obtener el teléfono
+        if (userId) {
+          obtenerUsuarioPorId(userId)
+            .then((res) => {
+              // Ajustamos según tu estructura (res.objectResponse o res directo)
+              const datos = res.objectResponse || res;
+              if (datos && datos.numeroTelefono) {
+                setUserInfo(prev => ({
+                  ...prev,
+                  telefono: datos.numeroTelefono
+                }));
+              }
+            })
+            .catch(err => console.error("Error al traer teléfono:", err));
+        }
 
       } catch (error) {
         console.error("Error decodificando el token:", error);
       }
     } else {
       setIsLoggedIn(false);
+      setUserInfo({
+        nombre: 'Usuario',
+        rol: 'Invitado',
+        correo: '',
+        telefono: ''
+      });
     }
-
-    setUserInfo({
-      nombre: nombreObtenido,
-      correo: correoObtenido,
-      rol: rolObtenido
-    });
   }, [isOpen]);
 
   return (
@@ -75,38 +100,45 @@ export default function Barra_perfil({ isOpen, onClose }: BarraPerfilProps) {
         <div className="p-8 text-white mt-8 flex flex-col h-full text-center">
           <div className="flex flex-col items-center mb-10">
             <div className="relative">
-               <img src={perfilIcono} alt="Perfil" className="h-32 w-32 rounded-full border-4 border-[#0ed1e8] shadow-[0_0_15px_rgba(14,209,232,0.3)] object-cover" />
-               <div className="absolute bottom-1 right-1 bg-[#0ed1e8] h-6 w-6 rounded-full border-2 border-[#03292e]"></div>
+              <img src={perfilIcono} alt="Perfil" className="h-32 w-32 rounded-full border-4 border-[#0ed1e8] shadow-[0_0_15px_rgba(14,209,232,0.3)] object-cover" />
+              <div className="absolute bottom-1 right-1 bg-[#0ed1e8] h-6 w-6 rounded-full border-2 border-[#03292e]"></div>
             </div>
 
             <h3 className="text-xl font-bold mt-4 break-words w-full uppercase tracking-tight">
               {isLoggedIn ? userInfo.nombre : 'Invitado'}
             </h3>
-            
+
             {isLoggedIn && (
               <>
-                <div className="mt-2 px-4 py-1 bg-[#0ed1e8]/20 border border-[#0ed1e8]/30 rounded-full">
-                   <span className="text-[#0ed1e8] text-xs font-bold uppercase tracking-widest">
+                <div className="mt-2 px-4 py-1 bg-[#0ed1e8]/20 border border-[#0ed1e8]/30 rounded-full inline-block">
+                  <span className="text-[#0ed1e8] text-xs font-bold uppercase tracking-widest">
                     {userInfo.rol}
-                   </span>
-                </div>
-                
-                {userInfo.correo && (
-                  <span className="text-sm text-gray-400 mt-3 truncate max-w-full opacity-60 italic" title={userInfo.correo}>
-                    {userInfo.correo}
                   </span>
-                )}
+                </div>
+
+                <div className="mt-4 flex flex-col items-center gap-1">
+                  {userInfo.correo && (
+                    <span className="text-sm text-gray-400 truncate max-w-[250px] opacity-70 italic">
+                      {userInfo.correo}
+                    </span>
+                  )}
+
+                  {userInfo.telefono && (
+                    <span className="text-sm text-[#0ed1e8] font-bold flex items-center gap-2 bg-[#0ed1e8]/10 px-3 py-1 rounded-lg mt-1 border border-[#0ed1e8]/20">
+                      <Phone size={14} />
+                      {userInfo.telefono}
+                    </span>
+                  )}
+                </div>
               </>
             )}
           </div>
 
-          {/* SECCIÓN DE BOTONES DE ACCIÓN */}
           <div className="flex-1 space-y-3">
             <hr className="border-white/10 my-6" />
-            
+
             {isLoggedIn && (
               <>
-                {/* Botón: Mis Reservas */}
                 <button
                   onClick={() => {
                     navigate('/MisReservas');
@@ -120,10 +152,9 @@ export default function Barra_perfil({ isOpen, onClose }: BarraPerfilProps) {
                   Mis Reservas
                 </button>
 
-                {/* NUEVO Botón: Mis Partidos */}
                 <button
                   onClick={() => {
-                    navigate('/MisPartidos'); // Navega a la ruta de partidos
+                    navigate('/MisPartidos');
                     onClose();
                   }}
                   className="w-full flex items-center gap-4 bg-white/5 hover:bg-[#0ed1e8] hover:text-[#03292e] p-4 rounded-2xl transition-all group font-semibold border border-white/5"

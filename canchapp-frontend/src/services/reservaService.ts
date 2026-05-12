@@ -14,6 +14,18 @@ export const crearReserva = async (reservaData: any, _token: string) => {
   }
 };
 
+export const confirmarReserva = async (stripePaymentId: string) => {
+  try {
+   
+    const response = await api.post('/pagos/confirmar', { stripePaymentId });
+    return response.data;
+  } catch (error) {
+    console.error("Error al confirmar la reserva:", error);
+    throw error;
+  }
+};
+
+
 export const obtenerHorasDisponibles = async (establecimientoId: number, fecha: string, canchaId: number) => {
   try {
     const response = await api.get('/reserva/disponibles/inicio', {
@@ -42,9 +54,6 @@ export const obtenerHorasDisponibles = async (establecimientoId: number, fecha: 
   }
 };
 
-
-
-
 export const obtenerMisReservas = async (userId: number) => {
   try {
     const response = await api.get(`/reserva/historial/usuario/${userId}`);
@@ -54,4 +63,16 @@ export const obtenerMisReservas = async (userId: number) => {
     console.error("Error al obtener historial de reservas:", error);
     throw error;
   }
+};
+
+export const obtenerReservasPorEstablecimiento = async (idEst: number) => {
+    try {
+        // URL basada en tu Excel de Administrador
+        const response = await api.get(`/reserva/establecimiento/${idEst}`);
+        // Según el formato de salida de tu Excel, los datos vienen en objectResponse
+        return response.data.objectResponse || [];
+    } catch (error) {
+        console.error("Error al obtener reservas del establecimiento:", error);
+        return [];
+    }
 };
