@@ -83,8 +83,18 @@ public class ReservaController {
 
   //Endpoint para crear una reserva manualmente por el Administrador (Sin pasarela de pago)
   @PostMapping("/admin")
+  @Operation(summary = "Reserva Admim", description = "Endpoint para crear una reserva manualmente por el Administrador (Sin pasarela de pago)")
   public ResponseEntity<ReservaDTO> crearReservaAdmin(@RequestBody ReservaDTO reservaDTO) {
     ReservaDTO nuevaReserva = reservaService.crearReservaAdmin(reservaDTO);
     return ResponseEntity.ok(nuevaReserva);
+  }
+
+
+  //Endpoint para listar las reservas de una cancha en específico.
+  // Protegido: Solo el dueño de la cancha puede verlas.
+  @GetMapping("/cancha/{canchaId}")
+  @Operation(summary = "Historial por cancha", description = "Obtiene todas las reservas (pasadas y futuras) de una cancha especifica")
+  public ResponseEntity<List<ReservaDTO>> listarPorCancha(@PathVariable Integer canchaId) {
+    return ResponseEntity.ok(reservaService.obtenerPorCancha(canchaId));
   }
 }

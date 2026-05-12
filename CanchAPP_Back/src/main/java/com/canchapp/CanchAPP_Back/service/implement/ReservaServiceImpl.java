@@ -27,6 +27,7 @@ public class ReservaServiceImpl implements ReservaService {
   private final HorarioEstablecimientoRepository horarioRepository;
   private final UsuarioRepository usuarioRepository;
   private final ModelMapper modelMapper;
+  private final EstablecimientoRepository establecimientoRepository;
 
   // el tiempo mínimo para alquilar es de 1 hora (60 minutos)
   private final int INTERVALO_MINUTOS = 60;
@@ -164,6 +165,14 @@ public class ReservaServiceImpl implements ReservaService {
 
   @Override
   public List<ReservaDTO> obtenerPorEstablecimiento(Integer establecimientoId) {
+
+    Establecimiento establecimiento = establecimientoRepository.findById(establecimientoId)
+      .orElseThrow(() -> new RuntimeException("Establecimiento no encontrado"));
+
+    if (!establecimiento.getUsuario().getCorreo().equals(SecurityContextHolder.getContext().getAuthentication().getName())) {
+      throw new RuntimeException("Acceso denegado: No eres el propietario de este establecimiento.");
+    }
+
     List<Reserva> reservas = reservaRepository.findByCancha_Establecimiento_EstablecimientoIdAndEstadoActivoTrue(establecimientoId);
 
     // Mapeamos la lista de Entidades a DTOs
@@ -288,5 +297,31 @@ public class ReservaServiceImpl implements ReservaService {
 
     // Retornamos la reserva mapeada
     return modelMapper.map(reservaGuardada, ReservaDTO.class);
+  }
+
+  @Override
+  public List<ReservaDTO> obtenerPorCancha(Integer canchaId) {
+    // 1. Obtener el correo del usuario autenticado desde el Token
+    String correoAutenticado = SecurityContextHolder.getContext().getAuthentication().getName();
+
+    // 2. Buscar la cancha en la base de datos
+    Cancha cancha = canchaRepository.findById(canchaId)
+      .orElseThrow(() -> new RuntimeException("Cancha no encontrada con ID: " + canchaId));
+
+    // REGLA DE SEGURIDAD: Validar propiedad
+    // Verificamos que el usuario dueño del establecimiento sea el mismo que hace la petición
+    String correoPropietario = cancha.getEstablecimiento().getUsuario().getCorreo();
+
+    if (!correoPropietario.equals(correoAutenticado)) {
+      throw new RuntimeException("Acceso denegado: No eres el propietario de este establecimiento/cancha.");
+    }
+
+    //Si pasó la seguridad, buscamos las reservas de esa cancha
+    List<Reserva> reservas = reservaRepository.findByCancha_CanchaIdAndEstadoActivoTrue(canchaId);
+
+    // convertimos a DTO usando la forma moderna con Streams
+    return reservas.stream()
+      .map(reserva -> modelMapper.map(reserva, ReservaDTO.class))
+      .toList();
   }
 }
