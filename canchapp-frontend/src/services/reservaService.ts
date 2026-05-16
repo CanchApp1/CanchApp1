@@ -14,9 +14,18 @@ export const crearReserva = async (reservaData: any, _token: string) => {
   }
 };
 
+export const crearIntentPago = async (reservaId: number) => {
+  try {
+    const response = await api.post(`/pagos/intent/${reservaId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error al crear intent de pago:", error);
+    throw error;
+  }
+};
+
 export const confirmarReserva = async (stripePaymentId: string) => {
   try {
-   
     const response = await api.post('/pagos/confirmar', { stripePaymentId });
     return response.data;
   } catch (error) {

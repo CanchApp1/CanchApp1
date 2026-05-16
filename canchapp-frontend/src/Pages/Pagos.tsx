@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Barra_de_navegacion from '../Components/Barra_navegacion';
 import { CreditCard, Lock, Calendar, ShieldCheck, CheckCircle2 } from 'lucide-react';
-import { crearReserva } from '../services/reservaService';
+import { crearReserva, crearIntentPago, confirmarReserva } from '../services/reservaService';
 
 export default function PagosPage() {
     const location = useLocation();
@@ -52,29 +52,30 @@ export default function PagosPage() {
 
     const handleSimularPago = async (e: React.FormEvent) => {
         e.preventDefault();
-        
-        if (!confirmado) {
-            // Si no ha confirmado el monto, no procesamos aún
-            return;
-        }
+
+        if (!confirmado) return;
 
         setProcesando(true);
 
         try {
             const token = sessionStorage.getItem('token');
+            if (!token || !reservaDTO) throw new Error("Faltan datos de sesión o reserva");
 
-            // 1. Simulación de latencia de pasarela de pago
-            await new Promise(resolve => setTimeout(resolve, 2500));
+            // 1. Crear la reserva → obtenemos el reservaId
+            const reservaCreada = await crearReserva(reservaDTO, token);
+            const reservaId = reservaCreada?.objectResponse?.reservaId ?? reservaCreada?.reservaId;
+            if (!reservaId) throw new Error("No se obtuvo el ID de la reserva");
 
-            // 2. Si hay token y datos, procedemos a registrar la reserva real en el DB
-            if (token && reservaDTO) {
-                await crearReserva(reservaDTO, token);
-                setPagoExitoso(true);
-                // Redirigir tras 3 segundos de éxito
-                setTimeout(() => navigate('/MisReservas'), 3000);
-            } else {
-                throw new Error("Faltan datos de sesión o reserva");
-            }
+            // 2. Crear el intent de pago en Stripe (backend usa tarjeta de prueba)
+            const intentData = await crearIntentPago(reservaId);
+            const stripePaymentId = intentData?.stripePaymentId ?? intentData?.objectResponse?.stripePaymentId;
+            if (!stripePaymentId) throw new Error("No se obtuvo el ID del pago de Stripe");
+
+            // 3. Confirmar el pago → backend actualiza reserva a CONFIRMADA
+            await confirmarReserva(stripePaymentId);
+
+            setPagoExitoso(true);
+            setTimeout(() => navigate('/MisReservas'), 3000);
         } catch (error) {
             console.error(error);
             alert("Hubo un error al procesar el pago o registrar la reserva. Intenta de nuevo.");
