@@ -1,9 +1,10 @@
 /* eslint-disable react-hooks/set-state-in-effect */
-import { X, LogOut, Calendar, Trophy, Phone } from 'lucide-react'
+import { X, LogOut, Calendar, Trophy, Phone, Pencil } from 'lucide-react'
 import perfilIcono from '../assets/silueta.png'
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { obtenerUsuarioPorId } from '../services/usuarioService' // Asegúrate de crear este archivo
+import { obtenerUsuarioPorId, obtenerMiPerfil } from '../services/usuarioService'
+import ModalEditarPerfil from './ModalEditarPerfil'
 
 interface BarraPerfilProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ interface BarraPerfilProps {
 export default function Barra_perfil({ isOpen, onClose }: BarraPerfilProps) {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [modalEditar, setModalEditar] = useState(false);
   const [userInfo, setUserInfo] = useState({
     nombre: 'Usuario',
     rol: 'Invitado',
@@ -79,8 +81,28 @@ export default function Barra_perfil({ isOpen, onClose }: BarraPerfilProps) {
     }
   }, [isOpen]);
 
+  const recargarPerfil = () => {
+    obtenerMiPerfil()
+      .then((datos) => {
+        setUserInfo(prev => ({
+          ...prev,
+          nombre: datos.nombre || prev.nombre,
+          correo: datos.correo || prev.correo,
+          telefono: datos.numeroTelefono || prev.telefono,
+        }));
+        sessionStorage.setItem('userName', datos.nombre || '');
+      })
+      .catch(() => {});
+  };
+
   return (
     <>
+      <ModalEditarPerfil
+        visible={modalEditar}
+        onCerrar={() => setModalEditar(false)}
+        onExito={recargarPerfil}
+      />
+
       {isOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-[60] transition-opacity"
@@ -107,6 +129,16 @@ export default function Barra_perfil({ isOpen, onClose }: BarraPerfilProps) {
             <h3 className="text-xl font-bold mt-4 break-words w-full uppercase tracking-tight">
               {isLoggedIn ? userInfo.nombre : 'Invitado'}
             </h3>
+
+            {isLoggedIn && (
+              <button
+                onClick={() => setModalEditar(true)}
+                className="mt-2 flex items-center gap-1.5 text-xs text-[#0ed1e8] hover:text-white transition-colors font-bold uppercase tracking-wider"
+              >
+                <Pencil size={12} />
+                Editar perfil
+              </button>
+            )}
 
             {isLoggedIn && (
               <>

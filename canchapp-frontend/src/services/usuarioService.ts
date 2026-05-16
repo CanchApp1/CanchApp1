@@ -26,12 +26,26 @@ export type UsuarioData = {
 export const obtenerUsuarioPorId = async (userId: number) => {
     try {
         const response = await api.get(`/usuarios/${userId}`);
-        // Según tu estructura estándar, los datos vienen en objectResponse
-        return response.data; 
+        return response.data;
     } catch (error) {
         console.error("Error al obtener detalle del usuario:", error);
         throw error;
     }
+};
+
+export const obtenerMiPerfil = async (): Promise<UsuarioData> => {
+    const response = await api.get('/usuarios/mi-perfil');
+    return response.data;
+};
+
+export const actualizarMiPerfil = async (data: {
+    nombre: string;
+    correo: string;
+    numeroTelefono: string;
+    contrasena?: string;
+}) => {
+    const response = await api.put('/usuarios/mi-perfil', data);
+    return response.data;
 };
 
 export const passwordService = {

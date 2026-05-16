@@ -35,16 +35,13 @@ export const confirmarReserva = async (stripePaymentId: string) => {
 };
 
 
-export const obtenerHorasDisponibles = async (establecimientoId: number, fecha: string, canchaId: number) => {
+export const obtenerHorasDisponibles = async (_establecimientoId: number, fecha: string, canchaId: number) => {
   try {
     const response = await api.get('/reserva/disponibles/inicio', {
-      params: { establecimientoId, fecha, canchaId }
+      params: { canchaId, fecha }
     });
 
     const data = response.data.objectResponse || [];
-
-    // AÑADE ESTO PARA VER EL FORMATO REAL
-    console.log("DATOS CRUDOS DEL SERVIDOR:", data[0]);
 
     return data.map((item: any) => {
       // Si el item ya es un texto (ej: "10:00:00"), lo devolvemos tal cual

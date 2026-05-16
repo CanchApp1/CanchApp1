@@ -40,8 +40,8 @@ export default function DashboardPropietario() {
     // ─── Hooks de negocio ────────────────────────
     const { canchas, loading: loadingCanchas, addCancha, updateCancha, deleteCancha } = useInventory(realEstId);
     const { horarios, loading: loadingHorarios, diasSinHorario, addHorario, updateHorario, deleteHorario } = useHorarios(realEstId);
-    const { establecimiento, loading: loadingConfig } = useEstablecimiento(userId);
-    const { reservas, loading: loadingResGlobal, cancelarReserva, crearReserva } = useReservasAdmin(realEstId);
+    const { establecimiento, loading: loadingConfig, refresh: refreshEstablecimiento } = useEstablecimiento(userId);
+    const { reservas, loading: loadingResGlobal, cancelarReserva, crearReserva, editarReserva } = useReservasAdmin(realEstId);
 
     return (
         <div className="flex min-h-screen bg-gray-50">
@@ -79,6 +79,7 @@ export default function DashboardPropietario() {
                             establecimientoId={realEstId ?? 0}
                             onCancelar={cancelarReserva}
                             onCrear={crearReserva}
+                            onEditar={editarReserva}
                         />
                     )}
 
@@ -99,6 +100,7 @@ export default function DashboardPropietario() {
                         <VistaConfiguracion
                             establecimiento={establecimiento}
                             loading={loadingConfig}
+                            onPerfilActualizado={refreshEstablecimiento}
                         />
                     )}
 
