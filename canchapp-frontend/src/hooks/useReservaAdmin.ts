@@ -32,5 +32,11 @@ export function useReservasAdmin(establecimientoId: number | null) {
         await cargarReservas();
     };
 
-    return { reservas, loading, refrescar: cargarReservas, cancelarReserva, crearReserva };
+    const editarReserva = async (id: number, data: Parameters<typeof crearReservaAdminService>[0]) => {
+        await cancelarReservaService(id);
+        await crearReservaAdminService(data);
+        await cargarReservas();
+    };
+
+    return { reservas, loading, refrescar: cargarReservas, cancelarReserva, crearReserva, editarReserva };
 }

@@ -1,4 +1,6 @@
-import { Building2, MapPin, Phone, Mail, User, Calendar, Shield } from 'lucide-react';
+import { useState } from 'react';
+import { Building2, MapPin, Phone, Mail, User, Calendar, Shield, Pencil } from 'lucide-react';
+import ModalEditarPerfil from '../ModalEditarPerfil';
 
 // ============================================
 // VISTA DE CONFIGURACIÓN — Perfil del local
@@ -8,9 +10,11 @@ import { Building2, MapPin, Phone, Mail, User, Calendar, Shield } from 'lucide-r
 interface Props {
     establecimiento: any;
     loading: boolean;
+    onPerfilActualizado?: () => void;
 }
 
-export default function VistaConfiguracion({ establecimiento, loading }: Props) {
+export default function VistaConfiguracion({ establecimiento, loading, onPerfilActualizado }: Props) {
+    const [modalEditar, setModalEditar] = useState(false);
     if (loading) {
         return (
             <div className="flex flex-col items-center py-20 animate-in fade-in duration-500">
@@ -33,6 +37,11 @@ export default function VistaConfiguracion({ establecimiento, loading }: Props) 
 
     return (
         <div className="animate-in slide-in-from-right-4 duration-500 space-y-8">
+            <ModalEditarPerfil
+                visible={modalEditar}
+                onCerrar={() => setModalEditar(false)}
+                onExito={() => onPerfilActualizado?.()}
+            />
             {/* Cabecera */}
             <div>
                 <h2 className="text-3xl font-black text-[#03292e] mb-2">Configuración</h2>
@@ -103,6 +112,13 @@ export default function VistaConfiguracion({ establecimiento, loading }: Props) 
                             <h3 className="text-xl font-black text-[#03292e]">Mi Perfil</h3>
                             <p className="text-gray-400 text-sm">Datos personales del propietario</p>
                         </div>
+                        <button
+                            onClick={() => setModalEditar(true)}
+                            className="ml-auto flex items-center gap-1.5 px-4 py-2 bg-[#03292e] text-white text-xs font-bold rounded-xl hover:bg-[#0ed1e8] hover:text-[#03292e] transition-all"
+                        >
+                            <Pencil size={13} />
+                            Editar perfil
+                        </button>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

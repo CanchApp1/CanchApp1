@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
-import { Search, Filter, Calendar, Clock, X, Plus } from 'lucide-react';
+import { Search, Filter, Calendar, Clock, X, Plus, Pencil } from 'lucide-react';
 import ModalCrearReservaAdmin from './ModalCrearReservaAdmin';
+import ModalEditarReservaAdmin from './ModalEditarReservaAdmin';
 
 interface Props {
     reservas: any[];
@@ -10,6 +11,7 @@ interface Props {
     establecimientoId: number;
     onCancelar: (id: number) => Promise<void>;
     onCrear: (data: { canchaId: number; fecha: string; horaInicio: string; horaFin: string; descripcion: string }) => Promise<void>;
+    onEditar: (id: number, data: { canchaId: number; fecha: string; horaInicio: string; horaFin: string; descripcion: string }) => Promise<void>;
 }
 
 const COLORES_ESTADO: Record<string, string> = {
@@ -25,13 +27,14 @@ const FILTROS_ESTADO = [
     { key: 'CANCELADA', label: 'Canceladas' },
 ];
 
-export default function VistaReservasEstablecimiento({ reservas, loading, adminUserId, canchas, establecimientoId, onCancelar, onCrear }: Props) {
+export default function VistaReservasEstablecimiento({ reservas, loading, adminUserId, canchas, establecimientoId, onCancelar, onCrear, onEditar }: Props) {
     const [busqueda, setBusqueda] = useState('');
     const [filtroTiempo, setFiltroTiempo] = useState('todas');
     const [filtroEstado, setFiltroEstado] = useState('todas');
     const [confirmandoId, setConfirmandoId] = useState<number | null>(null);
     const [cancelando, setCancelando] = useState<number | null>(null);
     const [modalVisible, setModalVisible] = useState(false);
+    const [reservaEditando, setReservaEditando] = useState<any | null>(null);
 
     const reservasFiltradas = useMemo(() => {
         return reservas.filter(res => {
@@ -71,9 +74,9 @@ export default function VistaReservasEstablecimiento({ reservas, loading, adminU
         }
     };
 
-    // Solo el admin puede cancelar reservas que él mismo creó y que no estén ya canceladas
-    const puedeCancel = (res: any) =>
-        res.usuario?.usuarioId === adminUserId && res.estadoReserva !== 'CANCELADA';
+    const esDeAdmin = (res: any) => res.usuario?.usuarioId === adminUserId;
+    const puedeCancel = (res: any) => esDeAdmin(res) && res.estadoReserva !== 'CANCELADA';
+    const puedeEditar = (res: any) => esDeAdmin(res) && res.estadoReserva !== 'CANCELADA';
 
     return (
         <div className="space-y-6">
@@ -83,6 +86,13 @@ export default function VistaReservasEstablecimiento({ reservas, loading, adminU
                 establecimientoId={establecimientoId}
                 onGuardar={onCrear}
                 onCerrar={() => setModalVisible(false)}
+            />
+            <ModalEditarReservaAdmin
+                visible={reservaEditando !== null}
+                reserva={reservaEditando}
+                establecimientoId={establecimientoId}
+                onGuardar={onEditar}
+                onCerrar={() => setReservaEditando(null)}
             />
 
             {/* Barra de filtros */}
@@ -186,6 +196,16 @@ export default function VistaReservasEstablecimiento({ reservas, loading, adminU
                                         <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase ${COLORES_ESTADO[res.estadoReserva] ?? 'bg-gray-100 text-gray-500'}`}>
                                             {res.estadoReserva}
                                         </span>
+
+                                        {puedeEditar(res) && !enConfirmacion && (
+                                            <button
+                                                onClick={() => setReservaEditando(res)}
+                                                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-500 text-xs font-bold rounded-xl hover:bg-blue-100 transition-all"
+                                            >
+                                                <Pencil size={13} />
+                                                Editar
+                                            </button>
+                                        )}
 
                                         {puedeCancel(res) && (
                                             enConfirmacion ? (
