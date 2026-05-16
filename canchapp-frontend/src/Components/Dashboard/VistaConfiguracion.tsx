@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Building2, MapPin, Phone, Mail, User, Calendar, Shield, Pencil } from 'lucide-react';
+import { Building2, MapPin, Phone, Mail, User, Calendar, Shield, Pencil, ImagePlus } from 'lucide-react';
 import ModalEditarPerfil from '../ModalEditarPerfil';
+import ModalEditarEstablecimiento from './ModalEditarEstablecimiento';
 
 // ============================================
 // VISTA DE CONFIGURACIÓN — Perfil del local
@@ -15,6 +16,7 @@ interface Props {
 
 export default function VistaConfiguracion({ establecimiento, loading, onPerfilActualizado }: Props) {
     const [modalEditar, setModalEditar] = useState(false);
+    const [modalEstablecimiento, setModalEstablecimiento] = useState(false);
     if (loading) {
         return (
             <div className="flex flex-col items-center py-20 animate-in fade-in duration-500">
@@ -42,6 +44,12 @@ export default function VistaConfiguracion({ establecimiento, loading, onPerfilA
                 onCerrar={() => setModalEditar(false)}
                 onExito={() => onPerfilActualizado?.()}
             />
+            <ModalEditarEstablecimiento
+                visible={modalEstablecimiento}
+                establecimiento={establecimiento}
+                onCerrar={() => setModalEstablecimiento(false)}
+                onExito={() => onPerfilActualizado?.()}
+            />
             {/* Cabecera */}
             <div>
                 <h2 className="text-3xl font-black text-[#03292e] mb-2">Configuración</h2>
@@ -58,9 +66,7 @@ export default function VistaConfiguracion({ establecimiento, loading, onPerfilA
                         <h3 className="text-xl font-black text-[#03292e]">Mi Establecimiento</h3>
                         <p className="text-gray-400 text-sm">Datos de tu negocio</p>
                     </div>
-
-                    {/* Badge de estado */}
-                    <div className="ml-auto">
+                    <div className="ml-auto flex items-center gap-3">
                         {establecimiento.estado ? (
                             <span className="px-4 py-1.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-200">
                                 ✅ Activo
@@ -70,8 +76,30 @@ export default function VistaConfiguracion({ establecimiento, loading, onPerfilA
                                 ⛔ Inactivo
                             </span>
                         )}
+                        <button
+                            onClick={() => setModalEstablecimiento(true)}
+                            className="flex items-center gap-1.5 px-4 py-2 bg-[#03292e] text-white text-xs font-bold rounded-xl hover:bg-[#0ed1e8] hover:text-[#03292e] transition-all"
+                        >
+                            <Pencil size={13} />
+                            Editar
+                        </button>
                     </div>
                 </div>
+
+                {/* Foto del establecimiento */}
+                {establecimiento.imagenUrl ? (
+                    <div className="w-full h-48 rounded-2xl overflow-hidden mb-6 border border-gray-100">
+                        <img src={establecimiento.imagenUrl} alt={establecimiento.nombreEstablecimiento} className="w-full h-full object-cover" />
+                    </div>
+                ) : (
+                    <button
+                        onClick={() => setModalEstablecimiento(true)}
+                        className="w-full h-28 mb-6 border-2 border-dashed border-gray-200 rounded-2xl flex items-center justify-center gap-2 text-gray-400 hover:border-[#0ed1e8] hover:text-[#0ed1e8] transition-all"
+                    >
+                        <ImagePlus size={20} />
+                        <span className="text-sm font-bold">Agregar foto del local</span>
+                    </button>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <InfoField
