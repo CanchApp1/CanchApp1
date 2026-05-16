@@ -18,7 +18,10 @@ export default function CanchasPage() {
     if (!token) {
       navigate('/Login');
     } else {
+       console.log("DEBUG: Datos de la cancha seleccionada:", cancha);
+        console.log("DEBUG: Precio detectado en el primer elemento:", cancha.canchas?.[0]?.precioPorHora);
       setSelectedCancha(cancha);
+      
     }
   };
 

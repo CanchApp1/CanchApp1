@@ -12,8 +12,11 @@ interface Props {
 }
 
 export default function TarjetaCancha({ cancha, onEditar, onEliminar }: Props) {
+    const esActiva = cancha.estado === 'ACTIVA' || cancha.estado === '1' || cancha.estado === true || cancha.estado === 1;
     return (
-        <div className="group bg-white p-6 rounded-3xl shadow-sm border border-gray-100 hover:shadow-lg hover:border-[#0ed1e8]/30 transition-all duration-300 relative overflow-hidden">
+        <div className={`group bg-white p-6 rounded-3xl shadow-sm border border-gray-100 transition-all ${
+            !esActiva ? 'opacity-60 grayscale-[0.5]' : ''
+        }`}>
 
             {/* Acento decorativo superior */}
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#0ed1e8] to-[#03292e] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -24,8 +27,12 @@ export default function TarjetaCancha({ cancha, onEditar, onEliminar }: Props) {
                     <h4 className="font-black text-xl text-[#03292e] uppercase tracking-wide">
                         {cancha.codigo}
                     </h4>
-                    <span className="inline-block mt-1 px-3 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-200">
-                        Activa
+                    <span className={`inline-block mt-1 px-3 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                        esActiva 
+                        ? 'bg-green-100 text-green-600' 
+                        : 'bg-red-100 text-red-600'
+                    }`}>
+                        {esActiva ? 'Activa' : 'Deshabilitada'}
                     </span>
                 </div>
 

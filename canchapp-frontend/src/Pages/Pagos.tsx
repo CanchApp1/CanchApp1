@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Barra_de_navegacion from '../Components/Barra_navegacion';
 import { CreditCard, Lock, Calendar, ShieldCheck, CheckCircle2 } from 'lucide-react';
-import { crearReserva } from '../services/reservaService';
+import { crearReserva, crearIntentPago, confirmarReserva } from '../services/reservaService';
 
 export default function PagosPage() {
     const location = useLocation();
@@ -14,6 +14,7 @@ export default function PagosPage() {
     const { reservaDTO, cancha, fecha, hora, precioAMostrar } = location.state || {};
     const [procesando, setProcesando] = useState(false);
     const [pagoExitoso, setPagoExitoso] = useState(false);
+    const [confirmado, setConfirmado] = useState(false); // Nuevo estado para confirmación
     const montoFinal = precioAMostrar || reservaDTO?.precio || 0; 
     const [form, setForm] = useState({
         numero: '',
@@ -51,23 +52,30 @@ export default function PagosPage() {
 
     const handleSimularPago = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!confirmado) return;
+
         setProcesando(true);
 
         try {
             const token = sessionStorage.getItem('token');
+            if (!token || !reservaDTO) throw new Error("Faltan datos de sesión o reserva");
 
-            // 1. Simulación de latencia de pasarela de pago
-            await new Promise(resolve => setTimeout(resolve, 2500));
+            // 1. Crear la reserva → obtenemos el reservaId
+            const reservaCreada = await crearReserva(reservaDTO, token);
+            const reservaId = reservaCreada?.objectResponse?.reservaId ?? reservaCreada?.reservaId;
+            if (!reservaId) throw new Error("No se obtuvo el ID de la reserva");
 
-            // 2. Si hay token y datos, procedemos a registrar la reserva real en el DB
-            if (token && reservaDTO) {
-                await crearReserva(reservaDTO, token);
-                setPagoExitoso(true);
-                // Redirigir tras 3 segundos de éxito
-                setTimeout(() => navigate('/MisReservas'), 3000);
-            } else {
-                throw new Error("Faltan datos de sesión o reserva");
-            }
+            // 2. Crear el intent de pago en Stripe (backend usa tarjeta de prueba)
+            const intentData = await crearIntentPago(reservaId);
+            const stripePaymentId = intentData?.stripePaymentId ?? intentData?.objectResponse?.stripePaymentId;
+            if (!stripePaymentId) throw new Error("No se obtuvo el ID del pago de Stripe");
+
+            // 3. Confirmar el pago → backend actualiza reserva a CONFIRMADA
+            await confirmarReserva(stripePaymentId);
+
+            setPagoExitoso(true);
+            setTimeout(() => navigate('/MisReservas'), 3000);
         } catch (error) {
             console.error(error);
             alert("Hubo un error al procesar el pago o registrar la reserva. Intenta de nuevo.");
@@ -190,24 +198,49 @@ export default function PagosPage() {
                             </div>
                         </div>
 
-                        <button
-                            disabled={procesando}
-                            type="submit"
-                            className={`w-full py-4 rounded-2xl font-black text-lg transition-all shadow-lg flex items-center justify-center gap-3 ${
-                                procesando 
-                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
-                                : 'bg-[#0ed1e8] text-[#03292e] hover:bg-[#0bc0d5] active:scale-95'
-                            }`}
-                        >
-                            {procesando ? (
-                                <>
-                                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#03292e]"></div>
-                                    Procesando Pago...
-                                </>
-                            ) : (
-                                `Pagar $${formatCurrency(precioAMostrar || 0)}`
-                            )}
-                        </button>
+                        {!confirmado ? (
+                            <button
+                                type="button"
+                                onClick={() => setConfirmado(true)}
+                                className="w-full py-4 rounded-2xl font-black text-lg bg-[#03292e] text-white hover:bg-[#0a4149] transition-all shadow-lg active:scale-95"
+                            >
+                                Revisar Pago
+                            </button>
+                        ) : (
+                            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
+                                <div className="bg-yellow-50 border-2 border-yellow-100 p-4 rounded-2xl text-center">
+                                    <p className="text-[#03292e] font-bold text-sm">¿Estás seguro de pagar <span className="text-lg font-black">${formatCurrency(precioAMostrar || 0)}</span>?</p>
+                                    <p className="text-[10px] text-gray-500 mt-1 uppercase font-black">Esta acción no se puede deshacer</p>
+                                </div>
+                                <div className="flex gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setConfirmado(false)}
+                                        className="flex-1 py-4 rounded-2xl font-bold text-gray-400 hover:text-gray-600 transition-all"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        disabled={procesando}
+                                        type="submit"
+                                        className={`flex-[2] py-4 rounded-2xl font-black text-lg transition-all shadow-lg flex items-center justify-center gap-3 ${
+                                            procesando 
+                                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                                            : 'bg-[#0ed1e8] text-[#03292e] hover:bg-[#0bc0d5] active:scale-95'
+                                        }`}
+                                    >
+                                        {procesando ? (
+                                            <>
+                                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#03292e]"></div>
+                                                Procesando...
+                                            </>
+                                        ) : (
+                                            "Confirmar y Pagar"
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                         
                         <p className="text-[10px] text-center text-gray-400 px-6 italic">
                             Transacción segura protegida por encriptación SSL de 256 bits.

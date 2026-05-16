@@ -18,12 +18,6 @@ export const CanchaCard = ({ cancha, onClick }: CanchaCardProps) => {
         horarioTexto = h.cerradoTodoElDia ? "Cerrado" : `${h.horaApertura.substring(0, 5)} - ${h.horaCierre.substring(0, 5)}`;
     }
 
-    let precioTexto = "Precio no disponible";
-    if (cancha.canchas?.length > 0) {
-        const p = cancha.canchas[0].precioPorHora;
-        if (p > 0) precioTexto = `$${p.toLocaleString('es-CO')} COP/h`;
-    }
-
     return (
         <div onClick={onClick} className="bg-white rounded-[2.5rem] overflow-hidden shadow-lg border border-gray-100 hover:shadow-2xl transition-all cursor-pointer group">
             <div className="relative h-60 overflow-hidden bg-[#03292e]">
@@ -41,9 +35,6 @@ export const CanchaCard = ({ cancha, onClick }: CanchaCardProps) => {
                 <div className="space-y-2 text-gray-500 text-sm">
                     <div className="flex items-center gap-2"><MapPin size={16} className="text-[#0ed1e8]" /> {ubicacion}</div>
                     <div className="flex items-center gap-2"><Clock size={16} className="text-[#0ed1e8]" /> {horarioTexto}</div>
-                </div>
-                <div className="pt-4 border-t border-gray-100 flex justify-end">
-                    <span className="text-[#03292e] font-black text-sm italic">{precioTexto}</span>
                 </div>
             </div>
         </div>

@@ -26,12 +26,8 @@ export const useInventory = (establecimientoId: number | null) => {
         try {
             const data = await obtenerCanchasPorEstablecimiento(establecimientoId);
 
-            // Filtramos: solo mostramos canchas con estado activo
-            const activas = data.filter((cancha: any) =>
-                cancha.estado === '1' || cancha.estado === true || cancha.estado === 1
-            );
-
-            setCanchas(activas);
+            console.log("Datos brutos del backend:", data); // Mira esto en la consola
+            setCanchas(data);
         } catch (error) {
             console.error('Error en useInventory (fetch):', error);
         } finally {
@@ -57,6 +53,7 @@ export const useInventory = (establecimientoId: number | null) => {
             return true;
         } catch (error) {
             console.error('Error en useInventory (crear):', error);
+            alert('Error al crear la cancha. Es posible que el código ya exista.');
             return false;
         }
     };
@@ -84,6 +81,11 @@ export const useInventory = (establecimientoId: number | null) => {
 
     // ─── 4. ELIMINAR (DELETE) ────────────────────────
     const deleteCancha = async (id: number) => {
+        if (canchas.length <= 1) {
+            alert('No puedes eliminar la única cancha de tu establecimiento. Debes tener al menos una activa.');
+            return;
+        }
+
         if (!window.confirm('¿Estás seguro de que quieres eliminar esta cancha?')) return;
 
         try {

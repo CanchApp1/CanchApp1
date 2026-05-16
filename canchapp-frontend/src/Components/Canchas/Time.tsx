@@ -46,8 +46,8 @@ export const TimeSlotGrid = ({
                     {bloques.map((hora) => {
 
                         // AÑADE ESTO PARA DEBUGEAR:
-                        console.log("Servidor devolvió:", horasDisponiblesBackend);
-                        console.log("Estamos buscando:", hora);
+                        //console.log("Servidor devolvió:", horasDisponiblesBackend);
+                        //console.log("Estamos buscando:", hora);
 
                         // Si el servidor devuelve "08:00" y tú buscas "08:00:00", no habrá match.
                         // Vamos a intentar una comparación más flexible:

@@ -1,9 +1,21 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Barra_de_navegacion from '../Components/Barra_navegacion';
 import { obtenerMisReservas } from '../services/reservaService';
-import { Calendar, Clock, CheckCircle2, AlertCircle, Trash2, MapPin } from 'lucide-react';
+import { Calendar, Clock, CheckCircle2, AlertCircle, Trash2, MapPin, Clock3 } from 'lucide-react';
+
+const COLORES_ESTADO: Record<string, string> = {
+    CONFIRMADA: 'bg-[#0ed1e8] text-[#03292e]',
+    PENDIENTE_PAGO: 'bg-orange-400 text-white',
+    CANCELADA: 'bg-red-500 text-white',
+};
+
+const ICONO_ESTADO: Record<string, React.ReactElement> = {
+    CONFIRMADA: <CheckCircle2 size={24} />,
+    PENDIENTE_PAGO: <Clock3 size={24} />,
+    CANCELADA: <AlertCircle size={24} />,
+};
 
 export default function MisReservas() {
     const [reservas, setReservas] = useState<any[]>([]);
@@ -21,6 +33,7 @@ export default function MisReservas() {
 
                 if (userId) {
                     const data = await obtenerMisReservas(userId);
+                            
                     setReservas(data);
                     console.log("Reservas obtenidas para la UI:", data);
                 }
@@ -71,14 +84,12 @@ export default function MisReservas() {
                                 
                                 {/* Badge de Estado Dinámico */}
                                 <div className="flex justify-between items-start mb-6 z-10">
-                                    <span className={`text-[10px] font-black uppercase px-4 py-1.5 rounded-full shadow-lg ${
-                                        reserva.estadoReserva === 'CONFIRMADA' 
-                                        ? 'bg-[#0ed1e8] text-[#03292e] shadow-[#0ed1e8]/20' 
-                                        : 'bg-yellow-500 text-black'
-                                    }`}>
-                                        {reserva.estadoReserva || 'PENDIENTE'}
+                                    <span className={`text-[10px] font-black uppercase px-4 py-1.5 rounded-full shadow-lg ${COLORES_ESTADO[reserva.estadoReserva] ?? 'bg-gray-400 text-white'}`}>
+                                        {reserva.estadoReserva === 'PENDIENTE_PAGO' ? 'Pendiente' : reserva.estadoReserva === 'CONFIRMADA' ? 'Confirmada' : reserva.estadoReserva === 'CANCELADA' ? 'Cancelada' : reserva.estadoReserva}
                                     </span>
-                                    <CheckCircle2 className="text-[#0ed1e8] opacity-50 group-hover:opacity-100 transition-opacity" size={24} />
+                                    <span className={`opacity-50 group-hover:opacity-100 transition-opacity ${COLORES_ESTADO[reserva.estadoReserva] ? 'text-[#0ed1e8]' : 'text-gray-400'}`}>
+                                        {ICONO_ESTADO[reserva.estadoReserva] ?? <CheckCircle2 size={24} />}
+                                    </span>
                                 </div>
 
                                 <div className="z-10 flex-1">
