@@ -11,6 +11,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.LocalDateTime;
@@ -27,6 +29,8 @@ public class ReservaServiceImpl implements ReservaService {
   private final HorarioEstablecimientoRepository horarioRepository;
   private final UsuarioRepository usuarioRepository;
   private final ModelMapper modelMapper;
+  private final EstablecimientoRepository establecimientoRepository;
+  private final DueloRepository dueloRepository;
 
   // el tiempo mínimo para alquilar es de 1 hora (60 minutos)
   private final int INTERVALO_MINUTOS = 60;
@@ -45,6 +49,9 @@ public class ReservaServiceImpl implements ReservaService {
     List<Reserva> reservasDelDia = reservaRepository.findByCancha_CanchaIdAndFechaAndEstadoActivoTrueAndEstadoReservaNot(
       canchaId, fecha, "CANCELADA");
 
+    //Buscamos también los Duelos de ese día en esa cancha
+    List<Duelo> duelosDelDia = dueloRepository.findByCancha_CanchaIdAndFechaAndEstadoActivoTrue(canchaId, fecha);
+
     List<LocalTime> horasDisponibles = new ArrayList<>();
     LocalTime horaIterador = horario.getHoraApertura();
 
@@ -59,6 +66,15 @@ public class ReservaServiceImpl implements ReservaService {
         if (horaIterador.isBefore(reserva.getHoraFin()) && posibleFin.isAfter(reserva.getHoraInicio())) {
           choca = true;
           break;
+        }
+      }
+
+      if (!choca) {
+        for (Duelo duelo : duelosDelDia) {
+          if (horaIterador.isBefore(duelo.getHoraFin()) && posibleFin.isAfter(duelo.getHoraInicio())) {
+            choca = true;
+            break;
+          }
         }
       }
 
@@ -81,6 +97,9 @@ public class ReservaServiceImpl implements ReservaService {
     List<Reserva> reservasDelDia = reservaRepository.findByCancha_CanchaIdAndFechaAndEstadoActivoTrueAndEstadoReservaNot(
       canchaId, fecha, "CANCELADA");
 
+    //Buscamos los Duelos del día
+    List<Duelo> duelosDelDia = dueloRepository.findByCancha_CanchaIdAndFechaAndEstadoActivoTrue(canchaId, fecha);
+
     // Buscamos cuál es la próxima reserva que empieza DESPUÉS de nuestra hora de inicio
     LocalTime limiteMaximo = horario.getHoraCierre(); // Por defecto, el límite es cuando cierran
 
@@ -90,6 +109,14 @@ public class ReservaServiceImpl implements ReservaService {
         // Y está antes de nuestro límite actual
         if (reserva.getHoraInicio().isBefore(limiteMaximo)) {
           limiteMaximo = reserva.getHoraInicio(); // Recortamos el límite
+        }
+      }
+    }
+
+    for (Duelo duelo : duelosDelDia) {
+      if (!duelo.getHoraInicio().isBefore(horaInicio)) {
+        if (duelo.getHoraInicio().isBefore(limiteMaximo)) {
+          limiteMaximo = duelo.getHoraInicio();
         }
       }
     }
@@ -124,6 +151,14 @@ public class ReservaServiceImpl implements ReservaService {
 
     if (existeCruce) {
       throw new RuntimeException("La cancha ya se encuentra reservada en este bloque horario.");
+    }
+
+    //Doble validación de seguridad contra Duelos en BD
+    List<Duelo> duelosConflictivos = dueloRepository.buscarDuelosConflictivos(
+      idCancha, reservaDTO.getFecha(), reservaDTO.getHoraInicio(), reservaDTO.getHoraFin());
+
+    if (!duelosConflictivos.isEmpty()) {
+      throw new RuntimeException("La cancha se encuentra bloqueada por un Duelo publicado en este horario.");
     }
 
     // Buscar Usuario y Cancha en la BD
@@ -164,6 +199,14 @@ public class ReservaServiceImpl implements ReservaService {
 
   @Override
   public List<ReservaDTO> obtenerPorEstablecimiento(Integer establecimientoId) {
+
+    Establecimiento establecimiento = establecimientoRepository.findById(establecimientoId)
+      .orElseThrow(() -> new RuntimeException("Establecimiento no encontrado"));
+
+    if (!establecimiento.getUsuario().getCorreo().equals(SecurityContextHolder.getContext().getAuthentication().getName())) {
+      throw new RuntimeException("Acceso denegado: No eres el propietario de este establecimiento.");
+    }
+
     List<Reserva> reservas = reservaRepository.findByCancha_Establecimiento_EstablecimientoIdAndEstadoActivoTrue(establecimientoId);
 
     // Mapeamos la lista de Entidades a DTOs
@@ -235,6 +278,13 @@ public class ReservaServiceImpl implements ReservaService {
       throw new RuntimeException("La cancha ya se encuentra reservada en este bloque horario.");
     }
 
+    List<Duelo> duelosConflictivos = dueloRepository.buscarDuelosConflictivos(
+      idCancha, reservaDTO.getFecha(), reservaDTO.getHoraInicio(), reservaDTO.getHoraFin());
+
+    if (!duelosConflictivos.isEmpty()) {
+      throw new RuntimeException("Atención Admin: No puedes reservar manualmente. La cancha está bloqueada por un Duelo.");
+    }
+
     Cancha cancha = canchaRepository.findById(idCancha)
       .orElseThrow(() -> new RuntimeException("Cancha no encontrada"));
 
@@ -259,11 +309,11 @@ public class ReservaServiceImpl implements ReservaService {
     long minutosReservados = java.time.temporal.ChronoUnit.MINUTES.between(
       reservaDTO.getHoraInicio(), reservaDTO.getHoraFin());
 
-    // Convertimos a horas (ej: 90 min / 60 = 1.5 horas)
     double horasReservadas = minutosReservados / 60.0;
 
-    // Multiplicamos por el precio de la cancha
-    Double totalAPagar = horasReservadas * cancha.getPrecioPorHora();
+    // NUEVO: Redondeo estricto a 0 decimales para COP
+    BigDecimal totalAPagar = BigDecimal.valueOf(horasReservadas * cancha.getPrecioPorHora())
+      .setScale(0, RoundingMode.HALF_UP);
 
     // Creamos la entidad Pago ajustada a tu clase Pago.java
     Pago pagoAutomatico = new Pago();
@@ -273,7 +323,7 @@ public class ReservaServiceImpl implements ReservaService {
     pagoAutomatico.setHoraPago(LocalTime.now()); // Tipo LocalTime
 
     // Convertimos el Double a BigDecimal por la precisión financiera
-    pagoAutomatico.setValorPago(java.math.BigDecimal.valueOf(totalAPagar));
+    pagoAutomatico.setValorPago(totalAPagar);
 
     // Usamos el campo de Stripe para identificar que fue un pago manual
     pagoAutomatico.setStripePaymentId("MANUAL_ADMIN_" + System.currentTimeMillis());
@@ -288,5 +338,31 @@ public class ReservaServiceImpl implements ReservaService {
 
     // Retornamos la reserva mapeada
     return modelMapper.map(reservaGuardada, ReservaDTO.class);
+  }
+
+  @Override
+  public List<ReservaDTO> obtenerPorCancha(Integer canchaId) {
+    // Obtener el correo del usuario autenticado desde el Token
+    String correoAutenticado = SecurityContextHolder.getContext().getAuthentication().getName();
+
+    // Buscar la cancha en la base de datos
+    Cancha cancha = canchaRepository.findById(canchaId)
+      .orElseThrow(() -> new RuntimeException("Cancha no encontrada con ID: " + canchaId));
+
+    // REGLA DE SEGURIDAD: Validar propiedad
+    // Verificamos que el usuario dueño del establecimiento sea el mismo que hace la petición
+    String correoPropietario = cancha.getEstablecimiento().getUsuario().getCorreo();
+
+    if (!correoPropietario.equals(correoAutenticado)) {
+      throw new RuntimeException("Acceso denegado: No eres el propietario de este establecimiento/cancha.");
+    }
+
+    //Si pasó la seguridad, buscamos las reservas de esa cancha
+    List<Reserva> reservas = reservaRepository.findByCancha_CanchaIdAndEstadoActivoTrue(canchaId);
+
+    // convertimos a DTO usando la forma moderna con Streams
+    return reservas.stream()
+      .map(reserva -> modelMapper.map(reserva, ReservaDTO.class))
+      .toList();
   }
 }
