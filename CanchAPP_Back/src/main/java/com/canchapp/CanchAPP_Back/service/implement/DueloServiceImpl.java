@@ -232,7 +232,8 @@ public class DueloServiceImpl implements DueloService {
 
     Duelo dueloGuardado = dueloRepository.save(duelo);
 
-    enviarNotificacionDueloAceptado(dueloGuardado, oponente);
+    this.enviarNotificacionDueloAceptado(dueloGuardado, oponente);
+    this.registrarReservaAutomatica(dueloGuardado, oponente, ahora);
 
     return modelMapper.map(dueloGuardado, DueloDTO.class);
   }
@@ -262,5 +263,32 @@ public class DueloServiceImpl implements DueloService {
       // Registramos el error en los logs pero permitimos que la app siga funcionando sin problemas
       System.err.println("No se pudo enviar el correo de notificación al creador del duelo: " + e.getMessage());
     }
+  }
+
+  private void registrarReservaAutomatica(Duelo duelo, Usuario oponente, LocalDateTime ahora) {
+    Reserva nuevaReserva = new Reserva();
+    
+    nuevaReserva.setDescripcion("Duelo hecho por " + duelo.getCreador().getNombre() + " + " + oponente.getNombre());
+
+    // Estado activo y estado de la reserva confirmado
+    nuevaReserva.setEstadoActivo(true);
+    nuevaReserva.setEstadoReserva("CONFIRMADO");
+
+    // Fechas correspondientes
+    nuevaReserva.setFecha(duelo.getFecha());
+    nuevaReserva.setFechaCreacion(ahora);
+    nuevaReserva.setFechaModificacion(null);
+    // Tiempos del partido
+    nuevaReserva.setHoraInicio(duelo.getHoraInicio());
+    nuevaReserva.setHoraFin(duelo.getHoraFin());
+
+    // Auditoría y relaciones de usuario
+    nuevaReserva.setUsuarioCreacion(duelo.getCreador().getCorreo());
+    nuevaReserva.setUsuarioModificacion(null);
+    nuevaReserva.setCancha(duelo.getCancha());
+    nuevaReserva.setUsuario(duelo.getCreador());
+
+    // Guardar en la base de datos
+    reservaRepository.save(nuevaReserva);
   }
 }
