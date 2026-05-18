@@ -1,76 +1,139 @@
-import Barra_de_navegacion from '../Components/Barra_navegacion';
-import MatchCard from '../Components/MatchCard';
-import ModalCrearMatch from '../Components/Formulario_match';
-import { Plus, Filter } from 'lucide-react';
 import { useState } from 'react';
+import { Plus, Swords } from 'lucide-react';
+import Barra_de_navegacion from '../Components/Barra_navegacion';
+import { DueloCard } from '../Components/Duelos/DueloCard';
+import ModalPublicarDuelo from '../Components/Duelos/ModalPublicarDuelo';
+import { ModalDetalleDuelo } from '../Components/Duelos/ModalDetalleDuelo';
+import { useDuelos } from '../hooks/useDuelos';
+import { type DueloDTO } from '../services/dueloService';
 
-// --- DATOS DE PRUEBA (Simulando lo que vendría de una base de datos) ---
-const partidosPendientes = [
-    { id: 1, jugador: "Andrés Vidal", jugadores: 5, cancha: "El Cubo", fecha: "24 Feb 2026", hora: "06:00 PM", rating: 4.5 },
-    { id: 2, jugador: "Cuadros Rodriguez", jugadores: 3, cancha: "El Templo", fecha: "25 Feb 2026", hora: "08:00 PM", rating: 4.2 },
-    { id: 3, jugador: "Juan Moreno", jugadores: 4, cancha: "Kopana", fecha: "26 Feb 2026", hora: "07:00 PM", rating: 4.8 },
-    { id: 4, jugador: "Jazmin Cuadros", jugadores: 6, cancha: "Cancha Marte", fecha: "27 Feb 2026", hora: "05:00 PM", rating: 3.9 },
-];
+function SkeletonCard() {
+  return (
+    <div className="bg-white rounded-[2rem] p-6 animate-pulse">
+      <div className="h-4 bg-gray-100 rounded-full w-1/4 mb-5" />
+      <div className="grid grid-cols-3 gap-6 items-center">
+        <div className="flex items-center gap-4">
+          <div className="w-16 h-16 bg-gray-100 rounded-2xl shrink-0" />
+          <div className="space-y-2 flex-1">
+            <div className="h-4 bg-gray-100 rounded-full w-28" />
+            <div className="h-3 bg-gray-100 rounded-full w-16" />
+          </div>
+        </div>
+        <div className="h-8 bg-gray-100 rounded-full mx-auto w-1/2" />
+        <div className="space-y-2">
+          <div className="h-3 bg-gray-100 rounded-full w-full" />
+          <div className="h-4 bg-gray-100 rounded-full w-3/4 ml-auto" />
+          <div className="h-3 bg-gray-100 rounded-full w-1/2 ml-auto" />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Match() {
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    return (
-        <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
-            <Barra_de_navegacion />
+  const [modalPublicar, setModalPublicar] = useState(false);
+  const [dueloSeleccionado, setDueloSeleccionado] = useState<DueloDTO | null>(null);
+  const { duelos, canchas, loading, error, refetch, getCanchaInfo } = useDuelos();
 
-            <main className="flex-1 w-full max-w-5xl mx-auto p-6 md:p-10">
-                
-                {/* Header de la sección */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
-                    <div>
-                        <h1 className="text-4xl font-black text-[#03292e]">Encuentra tu Rival</h1>
-                        <p className="text-gray-500 font-medium mt-1">Partidos abiertos en Popayán</p>
-                    </div>
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
+      <Barra_de_navegacion />
 
-                    <div className="flex gap-3">
-                        {/* Botón Filtro */}
-                        <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-100 rounded-xl font-bold text-[#03292e] shadow-sm hover:shadow-md transition-all">
-                            <Filter size={18} /> Filtros
-                        </button>
-                        <button 
-                            onClick={() => setIsModalOpen(true)}
-                            className="flex items-center gap-2 px-6 py-2 bg-[#0ed1e8] text-[#03292e] rounded-xl font-black shadow-md hover:bg-[#0cbcd1] transition-all"
-                        >
-                            <Plus size={18} /> Crear Reto
-                        </button>
-                        
-                    </div>
-                </div>
+      <main className="flex-1 w-full max-w-5xl mx-auto p-6 md:p-10">
 
-                {/* LISTADO DINÁMICO DE PARTIDOS */}
-                <div className="space-y-6">
-                    {partidosPendientes.length > 0 ? (
-                        partidosPendientes.map((partido) => (
-                            <MatchCard 
-                                key={partido.id} // Identificador único indispensable en React
-                                jugador={partido.jugador}
-                                jugadores={partido.jugadores}
-                                cancha={partido.cancha}
-                                fecha={partido.fecha}
-                                hora={partido.hora}
-                                rating={partido.rating}
-                            />
-                        ))
-                    ) : (
-                        // Estado vacío por si no hay retos
-                        <div className="text-center py-20 bg-white rounded-[2.5rem] border-2 border-dashed border-gray-100">
-                            <p className="text-gray-400 font-bold">No hay partidos pendientes en este momento.</p>
-                        </div>
-                    )}
-                </div>
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
+          <div>
+            <h1 className="text-4xl font-black text-[#03292e]">Encuentra tu Rival</h1>
+            <p className="text-gray-500 font-medium mt-1">
+              {loading
+                ? 'Cargando duelos...'
+                : `${duelos.length} duelo${duelos.length !== 1 ? 's' : ''} disponible${duelos.length !== 1 ? 's' : ''}`}
+            </p>
+          </div>
 
-                {/* Margen extra al final para scroll cómodo */}
-                <div className="h-20" />
-            </main>
-            <ModalCrearMatch 
-              isOpen={isModalOpen} 
-              onClose={() => setIsModalOpen(false)} 
-            />
+          <button
+            onClick={() => setModalPublicar(true)}
+            className="flex items-center gap-2 px-6 py-3 bg-[#0ed1e8] text-[#03292e] rounded-xl font-black shadow-md hover:bg-[#0cbcd1] transition-all active:scale-95"
+          >
+            <Plus size={18} /> Publicar Duelo
+          </button>
         </div>
-    );
+
+        {/* Skeleton */}
+        {loading && (
+          <div className="space-y-6">
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
+        )}
+
+        {/* Error */}
+        {!loading && error && (
+          <div className="bg-red-50 border border-red-100 rounded-[2rem] p-8 text-center">
+            <p className="text-red-500 font-bold mb-4">{error}</p>
+            <button
+              onClick={refetch}
+              className="px-6 py-2 bg-[#03292e] text-white rounded-xl font-bold text-sm hover:bg-[#0a4149] transition-all"
+            >
+              Reintentar
+            </button>
+          </div>
+        )}
+
+        {/* Lista de duelos */}
+        {!loading && !error && (
+          <div className="space-y-6">
+            {duelos.length > 0 ? (
+              duelos.map(duelo => (
+                <DueloCard
+                  key={duelo.dueloId}
+                  duelo={duelo}
+                  canchaInfo={getCanchaInfo(duelo.canchaId)}
+                  onVerDetalle={setDueloSeleccionado}
+                  onAceptar={setDueloSeleccionado}
+                />
+              ))
+            ) : (
+              <div className="text-center py-20 bg-white rounded-[2.5rem] border-2 border-dashed border-gray-100">
+                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Swords size={28} className="text-gray-300" />
+                </div>
+                <p className="text-gray-400 font-black uppercase tracking-widest text-sm">
+                  Sin duelos por ahora
+                </p>
+                <p className="text-gray-300 font-bold text-xs mt-2">
+                  Sé el primero en publicar un reto
+                </p>
+                <button
+                  onClick={() => setModalPublicar(true)}
+                  className="mt-6 px-6 py-3 bg-[#03292e] text-white rounded-xl font-black text-sm hover:bg-[#0a4149] transition-all"
+                >
+                  Publicar Duelo
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="h-20" />
+      </main>
+
+      <ModalPublicarDuelo
+        isOpen={modalPublicar}
+        onClose={() => setModalPublicar(false)}
+        canchas={canchas}
+        onSuccess={refetch}
+      />
+
+      <ModalDetalleDuelo
+        duelo={dueloSeleccionado}
+        canchaInfo={dueloSeleccionado ? getCanchaInfo(dueloSeleccionado.canchaId) : undefined}
+        isOpen={!!dueloSeleccionado}
+        onClose={() => setDueloSeleccionado(null)}
+        onSuccess={refetch}
+      />
+    </div>
+  );
 }
