@@ -2,6 +2,7 @@ import { X, Trophy, Calendar, Clock, AlignLeft, MapPin } from 'lucide-react';
 import { useState } from 'react';
 import { publicarDuelo } from '../../services/dueloService';
 import { type CanchaInfo } from '../../hooks/useDuelos';
+import FormPagoTarjeta from './FormPagoTarjeta';
 
 interface Props {
   isOpen: boolean;
@@ -30,6 +31,7 @@ export default function ModalPublicarDuelo({ isOpen, onClose, canchas, onSuccess
     horaFin: '',
     descripcion: '',
   });
+  const [step, setStep] = useState<'form' | 'pago'>('form');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,9 +58,8 @@ export default function ModalPublicarDuelo({ isOpen, onClose, canchas, onSuccess
 
   const mitad = calcularMitad();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleIrAPago = (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!form.canchaId || !form.fecha || !form.horaInicio || !form.horaFin) {
       setError('Completa todos los campos requeridos.');
       return;
@@ -67,7 +68,11 @@ export default function ModalPublicarDuelo({ isOpen, onClose, canchas, onSuccess
       setError('La hora de fin debe ser posterior a la hora de inicio.');
       return;
     }
+    setError(null);
+    setStep('pago');
+  };
 
+  const handleConfirmarPago = async () => {
     setLoading(true);
     setError(null);
     try {
@@ -79,11 +84,13 @@ export default function ModalPublicarDuelo({ isOpen, onClose, canchas, onSuccess
         descripcion: form.descripcion,
       });
       setForm({ canchaId: '', fecha: '', horaInicio: '', horaFin: '', descripcion: '' });
+      setStep('form');
       onSuccess();
       onClose();
     } catch (err: any) {
       const msg = err?.response?.data?.message ?? err?.response?.data;
       setError(typeof msg === 'string' ? msg : 'Error al publicar el duelo. Intenta de nuevo.');
+      setStep('form');
     } finally {
       setLoading(false);
     }
@@ -112,7 +119,16 @@ export default function ModalPublicarDuelo({ isOpen, onClose, canchas, onSuccess
           </button>
         </div>
 
-        <form className="p-6 md:p-8 space-y-5" onSubmit={handleSubmit}>
+        {step === 'pago' && mitad !== null && (
+          <FormPagoTarjeta
+            monto={mitad}
+            procesando={loading}
+            onConfirmar={handleConfirmarPago}
+            onVolver={() => setStep('form')}
+          />
+        )}
+
+        <form className={`p-6 md:p-8 space-y-5 ${step === 'pago' ? 'hidden' : ''}`} onSubmit={handleIrAPago}>
 
           {/* Cancha */}
           <div className="space-y-1.5">
@@ -234,10 +250,10 @@ export default function ModalPublicarDuelo({ isOpen, onClose, canchas, onSuccess
           <div className="pt-2">
             <button
               type="submit"
-              disabled={loading}
+              disabled={!mitad}
               className="w-full py-5 bg-[#03292e] text-white rounded-[2rem] font-black text-lg shadow-xl shadow-[#03292e]/20 hover:bg-[#0a4149] hover:-translate-y-1 transition-all active:scale-95 uppercase tracking-widest disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
             >
-              {loading ? 'Publicando...' : 'Publicar y Pagar 50%'}
+              Continuar al Pago →
             </button>
             <p className="text-[9px] text-center text-gray-400 mt-4 font-bold uppercase tracking-tighter">
               Al publicar pagas tu mitad. El rival paga la suya al aceptar.

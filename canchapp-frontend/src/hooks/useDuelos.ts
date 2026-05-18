@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { listarDuelosDisponibles, type DueloDTO } from '../services/dueloService';
 import { obtenerEstablecimientos } from '../services/establecimientoService';
+import { obtenerCanchasPorEstablecimiento } from '../services/canchaService';
 
 export interface CanchaInfo {
   canchaId: number;
@@ -20,34 +21,42 @@ export function useDuelos() {
   const cargarDatos = useCallback(async () => {
     setLoading(true);
     setError(null);
-    try {
-      const [duelosData, estData] = await Promise.all([
-        listarDuelosDisponibles(),
-        obtenerEstablecimientos(),
-      ]);
 
-      setDuelos(duelosData);
+    // Cargamos duelos y canchas de forma independiente para que si una falla no bloquee la otra
+    const [resultDuelos, resultEst] = await Promise.allSettled([
+      listarDuelosDisponibles(),
+      obtenerEstablecimientos(),
+    ]);
 
-      const lista: CanchaInfo[] = [];
-      const ests: any[] = estData.objectResponse ?? estData ?? [];
-      for (const est of ests) {
-        for (const cancha of (est.canchas ?? [])) {
-          lista.push({
-            canchaId: cancha.canchaId,
-            codigo: cancha.codigo,
-            precioPorHora: cancha.precioPorHora,
-            establecimientoId: est.establecimientoId,
-            nombreEstablecimiento: est.nombreEstablecimiento,
-            direccion: est.direccion,
-          });
-        }
-      }
-      setCanchas(lista);
-    } catch {
+    if (resultDuelos.status === 'fulfilled') {
+      setDuelos(resultDuelos.value);
+    } else {
       setError('No se pudieron cargar los duelos. Intenta de nuevo.');
-    } finally {
-      setLoading(false);
     }
+
+    if (resultEst.status === 'fulfilled') {
+      const ests: any[] = resultEst.value.objectResponse ?? resultEst.value ?? [];
+      const canchasPorEst = await Promise.all(
+        ests.map(async (est: any) => {
+          try {
+            const resCanchas = await obtenerCanchasPorEstablecimiento(est.establecimientoId);
+            return (resCanchas ?? []).map((c: any) => ({
+              canchaId: c.canchaId,
+              codigo: c.codigo,
+              precioPorHora: c.precioPorHora,
+              establecimientoId: est.establecimientoId,
+              nombreEstablecimiento: est.nombreEstablecimiento,
+              direccion: est.direccion,
+            }));
+          } catch {
+            return [];
+          }
+        })
+      );
+      setCanchas(canchasPorEst.flat());
+    }
+
+    setLoading(false);
   }, []);
 
   useEffect(() => {

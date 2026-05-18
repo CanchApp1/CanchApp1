@@ -2,6 +2,7 @@ import { X, Calendar, Clock, MapPin, DollarSign, User, Shield, AlertCircle } fro
 import { useState } from 'react';
 import { aceptarDuelo, type DueloDTO } from '../../services/dueloService';
 import { type CanchaInfo } from '../../hooks/useDuelos';
+import FormPagoTarjeta from './FormPagoTarjeta';
 
 interface Props {
   duelo: DueloDTO | null;
@@ -35,6 +36,7 @@ function calcularMitad(precioPorHora: number, inicio: string, fin: string): numb
 }
 
 export function ModalDetalleDuelo({ duelo, canchaInfo, isOpen, onClose, onSuccess }: Props) {
+  const [step, setStep] = useState<'detalle' | 'pago'>('detalle');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmado, setConfirmado] = useState(false);
@@ -48,7 +50,7 @@ export function ModalDetalleDuelo({ duelo, canchaInfo, isOpen, onClose, onSucces
   const currentUserId = parseInt(sessionStorage.getItem('userId') ?? '0', 10);
   const esPropio = !!duelo.creadorId && duelo.creadorId === currentUserId;
 
-  const handleAceptar = async () => {
+  const handleConfirmarPago = async () => {
     setLoading(true);
     setError(null);
     try {
@@ -56,12 +58,14 @@ export function ModalDetalleDuelo({ duelo, canchaInfo, isOpen, onClose, onSucces
       setConfirmado(true);
       setTimeout(() => {
         setConfirmado(false);
+        setStep('detalle');
         onSuccess();
         onClose();
       }, 2200);
     } catch (err: any) {
       const msg = err?.response?.data?.message ?? err?.response?.data;
       setError(typeof msg === 'string' ? msg : 'Error al aceptar el duelo. Intenta de nuevo.');
+      setStep('detalle');
     } finally {
       setLoading(false);
     }
@@ -76,6 +80,27 @@ export function ModalDetalleDuelo({ duelo, canchaInfo, isOpen, onClose, onSucces
           </div>
           <h3 className="text-2xl font-black text-[#03292e] mb-2">¡Duelo Aceptado!</h3>
           <p className="text-gray-500 font-bold">El partido está confirmado. ¡Buena suerte!</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === 'pago' && mitad !== null) {
+    return (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#03292e]/60 backdrop-blur-sm">
+        <div className="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-[#03292e] p-6 text-white flex justify-between items-center rounded-t-[2.5rem]">
+            <p className="font-black text-lg">Finalizar Pago</p>
+            <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+              <X size={20} />
+            </button>
+          </div>
+          <FormPagoTarjeta
+            monto={mitad}
+            procesando={loading}
+            onConfirmar={handleConfirmarPago}
+            onVolver={() => setStep('detalle')}
+          />
         </div>
       </div>
     );
@@ -190,13 +215,11 @@ export function ModalDetalleDuelo({ duelo, canchaInfo, isOpen, onClose, onSucces
             </div>
           ) : (
             <button
-              onClick={handleAceptar}
-              disabled={loading}
+              onClick={() => setStep('pago')}
+              disabled={!mitad}
               className="w-full py-5 bg-[#03292e] text-white rounded-[2rem] font-black text-lg shadow-xl hover:bg-[#0a4149] hover:-translate-y-1 transition-all active:scale-95 uppercase tracking-widest disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
             >
-              {loading
-                ? 'Procesando pago...'
-                : `Aceptar y Pagar $${mitad?.toLocaleString('es-CO') ?? '...'}`}
+              {`Aceptar y Pagar $${mitad?.toLocaleString('es-CO') ?? '...'}`}
             </button>
           )}
         </div>
