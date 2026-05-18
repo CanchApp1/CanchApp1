@@ -47,4 +47,39 @@ public class EmailServiceImpl implements EmailService {
       throw new RuntimeException("No se pudo enviar el correo de recuperación. Intente más tarde.");
     }
   }
+
+
+  @Override
+  public void enviarCorreoConfirmacionDuelo(String destinatario, String asunto, String mensaje) {
+    try {
+      MimeMessage mail = mailSender.createMimeMessage();
+      MimeMessageHelper helper = new MimeMessageHelper(mail, true, "UTF-8");
+
+      helper.setTo(destinatario);
+      helper.setSubject(asunto);
+
+      // Reemplazamos los saltos de línea (\n) por etiquetas <br> para que se visualice correctamente en HTML
+      String mensajeHtml = mensaje.replace("\n", "<br>");
+
+      // Diseño HTML reutilizable, limpio y adaptado al contexto deportivo
+      String contenidoHtml = "<div style='font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 10px;'>"
+        + "<h2 style='color: #27AE60; text-align: center;'>⚽ CanchAPP - Notificación</h2>"
+        + "<div style='font-size: 15px; color: #333; line-height: 1.6; background-color: #f9f9f9; padding: 15px; border-radius: 5px; border-left: 5px solid #27AE60;'>"
+        + mensajeHtml
+        + "</div>"
+        + "<p style='color: #777; font-size: 11px; margin-top: 30px; text-align: center;'>Este es un correo automático generado por CanchAPP. Por favor no respondas a este mensaje.</p>"
+        + "</div>";
+
+      helper.setText(contenidoHtml, true);
+      mailSender.send(mail);
+      System.out.println("Correo de notificación enviado con éxito a: " + destinatario);
+
+    } catch (MessagingException e) {
+      // Registramos el error pero lanzamos una excepción controlada para logs
+      System.err.println("Error al enviar correo de notificación a " + destinatario + ": " + e.getMessage());
+      throw new RuntimeException("Error al enviar la notificación por correo.");
+    }
+  }
+
+
 }

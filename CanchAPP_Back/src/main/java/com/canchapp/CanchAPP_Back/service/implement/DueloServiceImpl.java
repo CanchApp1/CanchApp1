@@ -5,6 +5,7 @@ import com.canchapp.CanchAPP_Back.model.*;
 import com.canchapp.CanchAPP_Back.model.enums.EstadoDuelo;
 import com.canchapp.CanchAPP_Back.repository.*;
 import com.canchapp.CanchAPP_Back.service.interfaces.DueloService;
+import com.canchapp.CanchAPP_Back.service.interfaces.EmailService;
 import com.stripe.model.PaymentIntent;
 import com.stripe.param.PaymentIntentCreateParams;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ public class DueloServiceImpl implements DueloService {
   private final UsuarioRepository usuarioRepository;
   private final ReservaRepository reservaRepository; // Para validar disponibilidad normal
   private final ModelMapper modelMapper;
+  private final EmailService emailService;
 
   @Override
   @Transactional
@@ -100,7 +102,7 @@ public class DueloServiceImpl implements DueloService {
       .setAmount(montoEnCentavos)
       .setCurrency("cop")
       .putMetadata("duelo_id", dueloGuardado.getDueloId().toString())
-      .setPaymentMethod("pm_card_visa") // Tarjeta de prueba
+      .setPaymentMethod(dto.getStripePaymentId()) // Tarjeta de prueba
       .setConfirm(true) // Cobro inmediato
       .setReturnUrl("http://localhost:8080")
       .build();
@@ -195,7 +197,7 @@ public class DueloServiceImpl implements DueloService {
       .setAmount(montoEnCentavos)
       .setCurrency("cop")
       .putMetadata("duelo_id_aceptado", duelo.getDueloId().toString())
-      .setPaymentMethod("pm_card_visa") // Tarjeta de prueba
+      .setPaymentMethod(stripePaymentId) // Tarjeta de prueba
       .setConfirm(true) // Cobro inmediato
       .setReturnUrl("http://localhost:8080")
       .build();
@@ -226,10 +228,39 @@ public class DueloServiceImpl implements DueloService {
     // 7. SELLAR EL DUELO COMO CONFIRMADO
     duelo.setOponente(oponente);
     duelo.setEstadoDuelo(EstadoDuelo.CONFIRMADO);
-    duelo.setFechaFinBloqueoCancha(null);
+    duelo.setFechaFinBloqueoCancha(ahora);
 
     Duelo dueloGuardado = dueloRepository.save(duelo);
 
+    enviarNotificacionDueloAceptado(dueloGuardado, oponente);
+
     return modelMapper.map(dueloGuardado, DueloDTO.class);
+  }
+
+  private void enviarNotificacionDueloAceptado(Duelo duelo, Usuario oponente) {
+    try {
+      String correoCreador = duelo.getCreador().getCorreo();
+      String nombreCreador = duelo.getCreador().getNombre();
+      String nombreOponente = oponente.getNombre();
+      String nombreCancha = duelo.getCancha().getEstablecimiento().getNombreEstablecimiento();
+
+      String asunto = "⚽ ¡Tu duelo ha sido aceptado! - CanchAPP";
+
+      String mensaje = "Hola " + nombreCreador + ",\n\n"
+        + "¡Buenas noticias! Tu duelo publicado para la cancha \"" + nombreCancha + "\" "
+        + "el día " + duelo.getFecha() + " en el horario de "
+        + duelo.getHoraInicio() + " a " + duelo.getHoraFin() + " "
+        + "ha sido aceptado por " + nombreOponente + ".\n\n"
+        + "Ambas partes han realizado el pago del 50%, por lo tanto el partido ya se encuentra CONFIRMADO.\n\n"
+        + "¡Mucho éxito en el partido!\n"
+        + "El equipo de CanchAPP.";
+
+      // Invocación a tu servicio de correos ya existente
+      emailService.enviarCorreoConfirmacionDuelo(correoCreador, asunto, mensaje);
+
+    } catch (Exception e) {
+      // Registramos el error en los logs pero permitimos que la app siga funcionando sin problemas
+      System.err.println("No se pudo enviar el correo de notificación al creador del duelo: " + e.getMessage());
+    }
   }
 }
