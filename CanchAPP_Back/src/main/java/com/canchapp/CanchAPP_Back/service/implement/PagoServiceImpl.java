@@ -41,7 +41,6 @@ public class PagoServiceImpl implements PagoService {
       .orElseThrow(() -> new RuntimeException("Reserva no encontrada con ID: " + reservaId));
 
     // 2. Calculamos el valor a pagar de forma DINÁMICA
-    // (Nota: Asegúrate de que los nombres de los métodos coincidan con tu modelo Reserva y Cancha)
     LocalTime horaInicio = reserva.getHoraInicio();
     LocalTime horaFin = reserva.getHoraFin();
 
