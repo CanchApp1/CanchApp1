@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/v1/api/duelos")
+@RequestMapping("/api/duelos")
 @Tag(name = "Duelos Controller", description = "Operaciones para la tabla duelos del esquema general")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*", methods = {RequestMethod.DELETE, RequestMethod.GET, RequestMethod.POST,RequestMethod.PUT})

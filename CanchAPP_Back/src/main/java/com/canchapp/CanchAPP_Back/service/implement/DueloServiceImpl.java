@@ -129,29 +129,27 @@ public class DueloServiceImpl implements DueloService {
     pagoDueloRepository.save(pagoCreador);
 
     // Mapeamos el resultado
-    DueloDTO respuesta = mapToDTO(dueloGuardado);
+    DueloDTO respuesta = modelMapper.map(dueloGuardado, DueloDTO.class);
     respuesta.setStripePaymentId(paymentIntent.getClientSecret());
 
     return respuesta;
   }
 
   @Override
-  @Transactional(readOnly = true)
   public List<DueloDTO> listarDuelosDisponibles() {
     // Solo mostramos duelos que no han expirado y están en estado Publicado
     List<String> estadosVisibles = List.of(EstadoDuelo.PUBLICADO_BLOQUEADO.name(), EstadoDuelo.PUBLICADO_LIBRE.name());
     return dueloRepository.findByEstadoDueloInAndEstadoActivoTrueOrderByFechaAsc(estadosVisibles)
       .stream()
-      .map(this::mapToDTO)
+      .map(d -> modelMapper.map(d, DueloDTO.class))
       .collect(Collectors.toList());
   }
 
   @Override
-  @Transactional(readOnly = true)
   public DueloDTO obtenerDetalleDuelo(Integer id) {
     Duelo duelo = dueloRepository.findById(id)
       .orElseThrow(() -> new RuntimeException("Duelo no encontrado"));
-    return mapToDTO(duelo);
+    return modelMapper.map(duelo, DueloDTO.class);
   }
 
   // Método auxiliar para el cálculo de precio
@@ -232,13 +230,6 @@ public class DueloServiceImpl implements DueloService {
 
     Duelo dueloGuardado = dueloRepository.save(duelo);
 
-    return mapToDTO(dueloGuardado);
-  }
-
-  private DueloDTO mapToDTO(Duelo duelo) {
-    DueloDTO dto = modelMapper.map(duelo, DueloDTO.class);
-    dto.setCreadorId(duelo.getCreador().getUsuarioId());
-    dto.setNombreCreador(duelo.getCreador().getNombre());
-    return dto;
+    return modelMapper.map(dueloGuardado, DueloDTO.class);
   }
 }
