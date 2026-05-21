@@ -97,9 +97,6 @@ public class ReservaServiceImpl implements ReservaService {
     List<Reserva> reservasDelDia = reservaRepository.findByCancha_CanchaIdAndFechaAndEstadoActivoTrueAndEstadoReservaNot(
       canchaId, fecha, "CANCELADA");
 
-    //Buscamos los Duelos del día
-    List<Duelo> duelosDelDia = dueloRepository.findByCancha_CanchaIdAndFechaAndEstadoActivoTrue(canchaId, fecha);
-
     // Buscamos cuál es la próxima reserva que empieza DESPUÉS de nuestra hora de inicio
     LocalTime limiteMaximo = horario.getHoraCierre(); // Por defecto, el límite es cuando cierran
 
@@ -113,14 +110,6 @@ public class ReservaServiceImpl implements ReservaService {
       }
     }
 
-    for (Duelo duelo : duelosDelDia) {
-      if (!duelo.getHoraInicio().isBefore(horaInicio)) {
-        if (duelo.getHoraInicio().isBefore(limiteMaximo)) {
-          limiteMaximo = duelo.getHoraInicio();
-        }
-      }
-    }
-
     // Ahora generamos la lista de horas fin desde (horaInicio + 1 hr) hasta el limiteMaximo
     List<LocalTime> horasFinDisponibles = new ArrayList<>();
     LocalTime horaIterador = horaInicio.plusMinutes(INTERVALO_MINUTOS);
@@ -128,7 +117,22 @@ public class ReservaServiceImpl implements ReservaService {
     // <= límite porque la hora fin PUEDE ser exactamente la hora en que empieza el siguiente partido
     while (!horaIterador.isAfter(limiteMaximo)) {
       horasFinDisponibles.add(horaIterador);
-      horaIterador = horaIterador.plusMinutes(INTERVALO_MINUTOS);
+
+      //PRIMER FRENO: Si ya alcanzamos el límite exacto, rompemos el bucle antes de sumar
+      // y arriesgarnos a que el reloj se resetee a las 00:00
+      if (horaIterador.equals(limiteMaximo)) {
+        break;
+      }
+
+      LocalTime siguienteHora = horaIterador.plusMinutes(INTERVALO_MINUTOS);
+
+      //SEGUNDO FRENO (Control anti-desbordamiento): Si el límite está en el mismo día (limiteMaximo >= horaInicio)
+      // y la siguiente hora calculada "retrocede" en el tiempo (ej: de 23:00 pasa a 00:00), significa que nos pasamos del límite.
+      if (!limiteMaximo.isBefore(horaInicio) && siguienteHora.isBefore(horaIterador)) {
+        break;
+      }
+
+      horaIterador = siguienteHora;
     }
 
     return horasFinDisponibles;

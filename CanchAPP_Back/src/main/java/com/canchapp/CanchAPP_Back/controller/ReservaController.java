@@ -5,6 +5,8 @@ import com.canchapp.CanchAPP_Back.dto.ReservaDTO;
 import com.canchapp.CanchAPP_Back.dto.ResponseService;
 import com.canchapp.CanchAPP_Back.service.interfaces.ReservaService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -14,7 +16,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/v1/api/reserva")
@@ -40,13 +44,25 @@ public class ReservaController {
   //OBTENER HORAS DE FIN
   @GetMapping("/disponibles/fin")
   @Operation(summary = "Horas de Fin Disponibles", description = "Devuelve hasta qué hora se puede extender un partido según la hora de inicio seleccionada")
-  public ResponseEntity<ApiResponse<List<LocalTime>>> obtenerHorasFin(
+  public ResponseEntity<ApiResponse<List<String>>> obtenerHorasFin(
     @RequestParam Integer canchaId,
-    @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate fecha,
-    @RequestParam @DateTimeFormat(pattern = "HH:mm") LocalTime horaInicio) {
+    @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
+    @RequestParam
+    @DateTimeFormat(pattern = "HH:mm[:ss]")
+    @Parameter(
+      description = "Hora de inicio en formato de 24h (ej: 08:00 o 08:00:00)",
+      schema = @Schema(type = "string", pattern = "HH:mm")
+    )
+    LocalTime horaInicio) {
 
     List<LocalTime> horas = reservaService.obtenerHorasDisponiblesParaFin(canchaId, fecha, horaInicio);
-    return ResponseEntity.ok(responseService.createResponse(horas, "retrieve"));
+
+    DateTimeFormatter formateador = DateTimeFormatter.ofPattern("HH:mm");
+    List<String> horasFormateadas = horas.stream()
+      .map(hora -> hora.format(formateador))
+      .collect(Collectors.toList());
+
+    return ResponseEntity.ok(responseService.createResponse(horasFormateadas, "retrieve"));
   }
 
   //CREAR LA RESERVA
