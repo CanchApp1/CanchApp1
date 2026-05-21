@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,4 +25,13 @@ public interface PagoRepository extends JpaRepository<Pago, Integer> {
   // 2. Pagos por Establecimiento (Navegamos: Pago -> Reserva -> Cancha -> Establecimiento)
   @Query("SELECT p FROM Pago p WHERE p.reserva.cancha.establecimiento.establecimientoId = :establecimientoId")
   List<Pago> findByEstablecimientoId(@Param("establecimientoId") Integer establecimientoId);
+
+  @Query("SELECT COALESCE(SUM(p.valorPago), 0) FROM Pago p " +
+    "WHERE p.reserva.cancha.establecimiento.usuario.correo = :correoPropietario " +
+    "AND p.estadoPago = 'COMPLETADO' " +
+    "AND p.fecha BETWEEN :fechaInicio AND :fechaFin")
+  BigDecimal sumarIngresosReservasPorPropietarioYRango(
+    @Param("correoPropietario") String correoPropietario,
+    @Param("fechaInicio") LocalDate fechaInicio,
+    @Param("fechaFin") LocalDate fechaFin);
 }

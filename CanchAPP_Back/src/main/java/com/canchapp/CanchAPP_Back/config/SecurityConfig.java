@@ -63,8 +63,8 @@ public class SecurityConfig {
     // Permite que tu frontend de Vite se conecte sin ser bloqueado
     configuration.setAllowedOrigins(List.of(
     "http://localhost:5173",        // Vite dev
-    "http://localhost:80",      
-    "http://localhost:3101",         
+    "http://localhost:80",
+    "http://localhost:3101",
     "http://localhost",             // Nginx local (sin puerto)
     "https://nzf80hm5-3101.use2.devtunnels.ms"  // ← tu devtunnel
 ));

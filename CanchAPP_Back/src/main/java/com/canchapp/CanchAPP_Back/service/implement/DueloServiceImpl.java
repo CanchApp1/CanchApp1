@@ -267,7 +267,7 @@ public class DueloServiceImpl implements DueloService {
 
   private void registrarReservaAutomatica(Duelo duelo, Usuario oponente, LocalDateTime ahora) {
     Reserva nuevaReserva = new Reserva();
-    
+
     nuevaReserva.setDescripcion("Duelo hecho por " + duelo.getCreador().getNombre() + " + " + oponente.getNombre());
 
     // Estado activo y estado de la reserva confirmado

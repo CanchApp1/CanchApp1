@@ -39,4 +39,50 @@ public interface ReservaRepository extends JpaRepository<Reserva, Integer> {
 
   //Buscar reservas por una cancha en específico (ignorando las eliminadas)
   List<Reserva> findByCancha_CanchaIdAndEstadoActivoTrue(Integer canchaId);
+
+  @Query("SELECT r FROM Reserva r " +
+    "WHERE r.cancha.establecimiento.usuario.correo = :correoPropietario " +
+    "AND r.estadoActivo = TRUE " +
+    "AND (r.estadoReserva = 'CONFIRMADO' OR r.estadoReserva = 'CONFIRMADA') " +
+    "AND r.fecha BETWEEN :fechaInicio AND :fechaFin")
+  List<Reserva> buscarReservasParaOcupacion(
+    @Param("correoPropietario") String correoPropietario,
+    @Param("fechaInicio") LocalDate fechaInicio,
+    @Param("fechaFin") LocalDate fechaFin);
+
+  @Query("SELECT r FROM Reserva r " +
+    "WHERE r.cancha.establecimiento.usuario.correo = :correoPropietario " +
+    "AND r.usuario.correo != :correoPropietario " + // <-- EXCLUYE AL PROPIETARIO LOGEADO
+    "AND r.estadoActivo = TRUE " +
+    "AND (r.estadoReserva = 'CONFIRMADO' OR r.estadoReserva = 'CONFIRMADA') " +
+    "AND r.fecha BETWEEN :fechaInicio AND :fechaFin")
+  List<Reserva> buscarReservasParaClientesFrecuentes(
+    @Param("correoPropietario") String correoPropietario,
+    @Param("fechaInicio") LocalDate fechaInicio,
+    @Param("fechaFin") LocalDate fechaFin);
+
+  //HOras pico y horas vaye por dia de la semana
+  @Query(value = "SELECT v.hora, COUNT(r.reserva_id) AS total " +
+    "FROM generate_series(6, 23) v(hora) " +
+    "LEFT JOIN reserva r ON r.estado_activo = true " +
+    "  AND r.estado_reserva <> 'CANCELADA' " +
+    "  AND r.fecha BETWEEN :fechaInicio AND :fechaFin " +
+    "  AND EXTRACT(ISODOW FROM r.fecha) = :diaSemanaIdx " +
+    "  AND r.cancha_id IN (" +
+    "      SELECT c.cancha_id " +
+    "      FROM general.cancha c " +
+    "      JOIN general.establecimiento e ON c.establecimiento_id = e.establecimiento_id " +
+    "      JOIN seguridad.usuario u ON e.usuario_usuario_id = u.usuario_id " + // <-- CORREGIDO: e.usuario_usuario_id
+    "      WHERE u.correo = :correoPropietario AND c.estado_activo = true" +
+    "  ) " +
+    "  AND v.hora >= EXTRACT(HOUR FROM r.hora_inicio) " +
+    "  AND v.hora < EXTRACT(HOUR FROM r.hora_fin) " +
+    "GROUP BY v.hora " +
+    "ORDER BY v.hora", nativeQuery = true)
+  List<Object[]> contarReservasPorHoraYDiaPostgreSQL(
+    @Param("correoPropietario") String correoPropietario,
+    @Param("fechaInicio") LocalDate fechaInicio,
+    @Param("fechaFin") LocalDate fechaFin,
+    @Param("diaSemanaIdx") int diaSemanaIdx);
+
 }
