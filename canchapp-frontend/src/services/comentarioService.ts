@@ -14,3 +14,8 @@ export const guardarComentario = async (data: ComentarioDTO) => {
     throw error;
   }
 };
+
+export const listarComentariosPorEstablecimiento = async (establecimientoId: number) => {
+  const response = await api.get(`/comentarios/establecimiento/${establecimientoId}`);
+  return response.data;
+};

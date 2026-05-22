@@ -17,6 +17,7 @@ import VistaReservas from '../Components/Dashboard/VistaReservas';
 import VistaJugadores from '../Components/Dashboard/VistaJugadores';
 import VistaCalendario from '../Components/Dashboard/VistaCalendario';
 import VistaEstadisticas from '../Components/Dashboard/VistaEstadisticas';
+import VistaComentariosPropietario from '../Components/Dashboard/VistaComentariosPropietario';
 
 // ============================================
 // DASHBOARD PROPIETARIO — Página principal
@@ -131,6 +132,11 @@ export default function DashboardPropietario() {
                             onEditar={updateHorario}
                             onEliminar={deleteHorario}
                         />
+                    )}
+
+                    {/* ─── SECCIÓN COMENTARIOS ──────────── */}
+                    {seccionActiva === 'comentarios' && (
+                        <VistaComentariosPropietario establecimientoId={realEstId} />
                     )}
 
                     {/* ─── SECCIÓN CONFIGURACIÓN ─────────── */}

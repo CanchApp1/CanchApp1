@@ -1,4 +1,4 @@
-import { LayoutDashboard, CalendarDays, MapPin, Settings, LogOut, Clock, Users, BarChart2 } from 'lucide-react';
+import { LayoutDashboard, CalendarDays, MapPin, Settings, LogOut, Clock, Users, BarChart2, MessageSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface SidebarAdminProps {
@@ -22,6 +22,7 @@ export default function SidebarAdmin({ seccionActiva, onCambiarSeccion }: Sideba
         { id: 'jugadores',     label: 'Clientes',      icono: Users },
         { id: 'horarios',      label: 'Horarios',      icono: Clock },
         { id: 'canchas',       label: 'Mi Cancha',     icono: MapPin },
+        { id: 'comentarios',   label: 'Comentarios',   icono: MessageSquare },
         { id: 'config',        label: 'Configuración', icono: Settings },
     ];
 
