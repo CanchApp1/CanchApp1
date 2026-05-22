@@ -1,6 +1,7 @@
 import { X, Trophy, Calendar, Clock, AlignLeft, MapPin } from 'lucide-react';
 import { useState } from 'react';
 import { publicarDuelo } from '../../services/dueloService';
+import { obtenerHorasDisponibles, obtenerHorasDisponiblesFin } from '../../services/reservaService';
 import { type CanchaInfo } from '../../hooks/useDuelos';
 import FormPagoTarjeta from './FormPagoTarjeta';
 import { fechaLocal } from '../../utils/fecha';
@@ -59,7 +60,7 @@ export default function ModalPublicarDuelo({ isOpen, onClose, canchas, onSuccess
 
   const mitad = calcularMitad();
 
-  const handleIrAPago = (e: React.FormEvent) => {
+  const handleIrAPago = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.canchaId || !form.fecha || !form.horaInicio || !form.horaFin) {
       setError('Completa todos los campos requeridos.');
@@ -69,7 +70,37 @@ export default function ModalPublicarDuelo({ isOpen, onClose, canchas, onSuccess
       setError('La hora de fin debe ser posterior a la hora de inicio.');
       return;
     }
+    // Verificar disponibilidad: la hora de inicio debe estar libre
+    setLoading(true);
     setError(null);
+    try {
+      const canchaId = parseInt(form.canchaId, 10);
+      const establecimientoId = canchaSeleccionada?.establecimientoId ?? 0;
+      const horasLibres = await obtenerHorasDisponibles(establecimientoId, form.fecha, canchaId);
+      const horaInicioConSegundos = form.horaInicio + ':00';
+      const inicioDisponible = horasLibres.some(
+        (h: string) => h === horaInicioConSegundos || h.startsWith(form.horaInicio)
+      );
+      if (!inicioDisponible) {
+        setError('Ese horario ya está ocupado en esta cancha. Por favor elige otra hora.');
+        return;
+      }
+      // Verificar que la hora de fin sea válida dentro de las horas disponibles
+      const horasFinLibres = await obtenerHorasDisponiblesFin(canchaId, form.fecha, horaInicioConSegundos);
+      const horaFinConSegundos = form.horaFin + ':00';
+      const finDisponible = horasFinLibres.some(
+        (h: string) => h === horaFinConSegundos || h.startsWith(form.horaFin)
+      );
+      if (!finDisponible) {
+        setError('La hora de fin no está disponible para ese horario. Por favor ajusta las horas.');
+        return;
+      }
+    } catch {
+      setError('No se pudo verificar la disponibilidad. Intenta de nuevo.');
+      return;
+    } finally {
+      setLoading(false);
+    }
     setStep('pago');
   };
 
@@ -251,10 +282,10 @@ export default function ModalPublicarDuelo({ isOpen, onClose, canchas, onSuccess
           <div className="pt-2">
             <button
               type="submit"
-              disabled={!mitad}
+              disabled={!mitad || loading}
               className="w-full py-5 bg-[#03292e] text-white rounded-[2rem] font-black text-lg shadow-xl shadow-[#03292e]/20 hover:bg-[#0a4149] hover:-translate-y-1 transition-all active:scale-95 uppercase tracking-widest disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
             >
-              Continuar al Pago →
+              {loading ? 'Verificando disponibilidad...' : 'Continuar al Pago →'}
             </button>
             <p className="text-[9px] text-center text-gray-400 mt-4 font-bold uppercase tracking-tighter">
               Al publicar pagas tu mitad. El rival paga la suya al aceptar.

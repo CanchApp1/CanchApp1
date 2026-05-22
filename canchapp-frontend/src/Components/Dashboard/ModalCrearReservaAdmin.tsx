@@ -6,7 +6,7 @@ import { fechaLocal } from '../../utils/fecha';
 interface Cancha {
     canchaId: number;
     codigo: string;
-    estado: string;
+    estado: any;
 }
 
 interface ReservaAdminData {
@@ -93,7 +93,10 @@ export default function ModalCrearReservaAdmin({ visible, canchas, establecimien
 
     if (!visible) return null;
 
-    const canchasActivas = canchas.filter(c => c.estado === '1' || c.estado?.toUpperCase() === 'ACTIVO');
+    const canchasActivas = canchas.filter(c => {
+        const e = c.estado;
+        return e === true || e === 1 || (typeof e === 'string' && ['1', 'ACTIVO', 'ACTIVA'].includes(e.toUpperCase()));
+    });
     const hoy = fechaLocal();
 
     return (

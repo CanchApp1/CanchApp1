@@ -1,7 +1,9 @@
 import { useState, useMemo } from 'react';
-import { Search, Filter, Calendar, Clock, X, Plus, Pencil } from 'lucide-react';
+import { Search, Filter, Calendar, Clock, Plus } from 'lucide-react';
 import ModalCrearReservaAdmin from './ModalCrearReservaAdmin';
 import ModalEditarReservaAdmin from './ModalEditarReservaAdmin';
+import ModalDetalleReserva from './ModalDetalleReserva';
+import { getEstadoDisplay, puedeModificar } from '../../utils/reservaUtils';
 
 interface Props {
     reservas: any[];
@@ -14,12 +16,6 @@ interface Props {
     onEditar: (id: number, data: { canchaId: number; fecha: string; horaInicio: string; horaFin: string; descripcion: string }) => Promise<void>;
 }
 
-const COLORES_ESTADO: Record<string, string> = {
-    CONFIRMADA: 'bg-green-100 text-green-600',
-    PENDIENTE_PAGO: 'bg-orange-100 text-orange-600',
-    CANCELADA: 'bg-red-100 text-red-500',
-};
-
 const FILTROS_ESTADO = [
     { key: 'todas', label: 'Todos' },
     { key: 'CONFIRMADA', label: 'Confirmadas' },
@@ -31,9 +27,8 @@ export default function VistaReservasEstablecimiento({ reservas, loading, adminU
     const [busqueda, setBusqueda] = useState('');
     const [filtroTiempo, setFiltroTiempo] = useState('todas');
     const [filtroEstado, setFiltroEstado] = useState('todas');
-    const [confirmandoId, setConfirmandoId] = useState<number | null>(null);
-    const [cancelando, setCancelando] = useState<number | null>(null);
     const [modalVisible, setModalVisible] = useState(false);
+    const [reservaDetalle, setReservaDetalle] = useState<any | null>(null);
     const [reservaEditando, setReservaEditando] = useState<any | null>(null);
 
     const reservasFiltradas = useMemo(() => {
@@ -64,19 +59,17 @@ export default function VistaReservasEstablecimiento({ reservas, loading, adminU
         });
     }, [reservas, busqueda, filtroTiempo, filtroEstado]);
 
-    const handleCancelar = async (id: number) => {
-        setCancelando(id);
-        try {
-            await onCancelar(id);
-        } finally {
-            setCancelando(null);
-            setConfirmandoId(null);
-        }
+    const esDeAdmin = (res: any) => {
+        const uid = res.usuario?.usuarioId ?? res.usuario?.idUsuario ?? res.usuario?.id;
+        return Number(uid) === adminUserId;
     };
 
-    const esDeAdmin = (res: any) => res.usuario?.usuarioId === adminUserId;
-    const puedeCancel = (res: any) => esDeAdmin(res) && res.estadoReserva !== 'CANCELADA';
-    const puedeEditar = (res: any) => esDeAdmin(res) && res.estadoReserva !== 'CANCELADA';
+    const abrirDetalle = (res: any) => setReservaDetalle(res);
+
+    const abrirEditar = () => {
+        setReservaEditando(reservaDetalle);
+        setReservaDetalle(null);
+    };
 
     return (
         <div className="space-y-6">
@@ -93,6 +86,14 @@ export default function VistaReservasEstablecimiento({ reservas, loading, adminU
                 establecimientoId={establecimientoId}
                 onGuardar={onEditar}
                 onCerrar={() => setReservaEditando(null)}
+            />
+            <ModalDetalleReserva
+                visible={reservaDetalle !== null}
+                reserva={reservaDetalle}
+                esDeAdmin={reservaDetalle ? esDeAdmin(reservaDetalle) : false}
+                onCerrar={() => setReservaDetalle(null)}
+                onEditar={abrirEditar}
+                onCancelar={onCancelar}
             />
 
             {/* Barra de filtros */}
@@ -136,7 +137,6 @@ export default function VistaReservasEstablecimiento({ reservas, loading, adminU
                     </div>
                 </div>
 
-                {/* Filtro por estado */}
                 <div className="flex gap-2 flex-wrap">
                     {FILTROS_ESTADO.map(({ key, label }) => (
                         <button
@@ -164,20 +164,28 @@ export default function VistaReservasEstablecimiento({ reservas, loading, adminU
                     {reservasFiltradas.length > 0 ? (
                         reservasFiltradas.map((res: any, index: number) => {
                             const id = res.reservaId ?? res.idReserva;
-                            const enConfirmacion = confirmandoId === id;
+                            const esMia = esDeAdmin(res);
+                            const estado = getEstadoDisplay(res.estadoReserva, res.fecha);
+                            const modificable = puedeModificar(res.estadoReserva, res.fecha);
 
                             return (
-                                <div
+                                <button
                                     key={id ?? index}
-                                    className="bg-white p-5 rounded-[1.5rem] border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
+                                    onClick={() => abrirDetalle(res)}
+                                    className="bg-white p-5 rounded-[1.5rem] border border-gray-100 shadow-sm hover:shadow-md hover:border-[#0ed1e8]/40 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 text-left w-full group"
                                 >
                                     <div className="flex items-center gap-4">
-                                        <div className="h-12 w-12 bg-[#e6effc] rounded-2xl flex items-center justify-center text-[#03292e]">
+                                        <div className={`h-12 w-12 rounded-2xl flex items-center justify-center transition-colors ${modificable ? 'bg-[#e6effc] text-[#03292e] group-hover:bg-[#0ed1e8]/20' : 'bg-gray-100 text-gray-400'}`}>
                                             <Calendar size={20} />
                                         </div>
                                         <div>
                                             <h4 className="font-black text-[#03292e]">
                                                 {res.usuario?.nombre || 'Cliente Anónimo'}
+                                                {esMia && (
+                                                    <span className="ml-2 text-[10px] font-bold bg-[#0ed1e8]/20 text-[#03292e] px-2 py-0.5 rounded-full">
+                                                        Tu reserva
+                                                    </span>
+                                                )}
                                             </h4>
                                             <p className="text-xs text-gray-400 font-bold uppercase tracking-tighter">
                                                 {res.cancha?.codigo} • {res.fecha}
@@ -189,53 +197,14 @@ export default function VistaReservasEstablecimiento({ reservas, loading, adminU
                                         <div className="flex items-center gap-2">
                                             <Clock size={16} className="text-[#0ed1e8]" />
                                             <span className="text-sm font-bold text-gray-600">
-                                                {res.horaInicio} - {res.horaFin}
+                                                {res.horaInicio?.slice(0, 5)} - {res.horaFin?.slice(0, 5)}
                                             </span>
                                         </div>
-
-                                        <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase ${COLORES_ESTADO[res.estadoReserva] ?? 'bg-gray-100 text-gray-500'}`}>
-                                            {res.estadoReserva}
+                                        <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase ${estado.colorLight}`}>
+                                            {estado.label}
                                         </span>
-
-                                        {puedeEditar(res) && !enConfirmacion && (
-                                            <button
-                                                onClick={() => setReservaEditando(res)}
-                                                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-500 text-xs font-bold rounded-xl hover:bg-blue-100 transition-all"
-                                            >
-                                                <Pencil size={13} />
-                                                Editar
-                                            </button>
-                                        )}
-
-                                        {puedeCancel(res) && (
-                                            enConfirmacion ? (
-                                                <div className="flex gap-2">
-                                                    <button
-                                                        onClick={() => handleCancelar(id)}
-                                                        disabled={cancelando === id}
-                                                        className="px-3 py-1.5 bg-red-500 text-white text-xs font-bold rounded-xl hover:bg-red-600 transition-all disabled:opacity-60"
-                                                    >
-                                                        {cancelando === id ? 'Cancelando...' : 'Confirmar'}
-                                                    </button>
-                                                    <button
-                                                        onClick={() => setConfirmandoId(null)}
-                                                        className="px-3 py-1.5 bg-gray-100 text-gray-500 text-xs font-bold rounded-xl hover:bg-gray-200 transition-all"
-                                                    >
-                                                        Volver
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <button
-                                                    onClick={() => setConfirmandoId(id)}
-                                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-500 text-xs font-bold rounded-xl hover:bg-red-100 transition-all"
-                                                >
-                                                    <X size={13} />
-                                                    Cancelar reserva
-                                                </button>
-                                            )
-                                        )}
                                     </div>
-                                </div>
+                                </button>
                             );
                         })
                     ) : (

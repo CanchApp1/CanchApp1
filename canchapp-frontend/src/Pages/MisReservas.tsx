@@ -1,20 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState } from 'react';
 import Barra_de_navegacion from '../Components/Barra_navegacion';
 import { obtenerMisReservas } from '../services/reservaService';
-import { Calendar, Clock, CheckCircle2, AlertCircle, Trash2, MapPin, Clock3 } from 'lucide-react';
+import { getEstadoDisplay } from '../utils/reservaUtils';
+import { Calendar, Clock, AlertCircle, MapPin, Clock3, CheckCircle2, CalendarDays } from 'lucide-react';
 
-const COLORES_ESTADO: Record<string, string> = {
-    CONFIRMADA: 'bg-[#0ed1e8] text-[#03292e]',
-    PENDIENTE_PAGO: 'bg-orange-400 text-white',
-    CANCELADA: 'bg-red-500 text-white',
-};
-
-const ICONO_ESTADO: Record<string, React.ReactElement> = {
-    CONFIRMADA: <CheckCircle2 size={24} />,
-    PENDIENTE_PAGO: <Clock3 size={24} />,
-    CANCELADA: <AlertCircle size={24} />,
+const ICONO_LABEL: Record<string, React.ReactElement> = {
+    'Confirmada': <CheckCircle2 size={24} />,
+    'Pendiente pago': <Clock3 size={24} />,
+    'Cancelada': <AlertCircle size={24} />,
+    'Jugada': <CheckCircle2 size={24} />,
+    'Hoy': <CalendarDays size={24} />,
 };
 
 export default function MisReservas() {
@@ -22,29 +18,23 @@ export default function MisReservas() {
     const [cargando, setCargando] = useState(true);
 
     useEffect(() => {
-        const cargarDatos = async () => {
+        const cargar = async () => {
             const token = sessionStorage.getItem('token');
             if (!token) return;
-
             try {
-                // 1. Decodificar el ID del usuario desde el token (usando userId según tu consola)
                 const payload = JSON.parse(atob(token.split('.')[1]));
                 const userId = payload.userId;
-
                 if (userId) {
                     const data = await obtenerMisReservas(userId);
-                            
                     setReservas(data);
-                    console.log("Reservas obtenidas para la UI:", data);
                 }
             } catch (error) {
-                console.error("Error al cargar reservas:", error);
+                console.error('Error al cargar reservas:', error);
             } finally {
                 setCargando(false);
             }
         };
-
-        cargarDatos();
+        cargar();
     }, []);
 
     const formatCurrency = (val: number) => new Intl.NumberFormat('de-DE').format(val);
@@ -52,7 +42,7 @@ export default function MisReservas() {
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col">
             <Barra_de_navegacion />
-            
+
             <main className="flex-1 p-6 md:p-12 max-w-6xl mx-auto w-full">
                 <header className="mb-10 flex justify-between items-end">
                     <div>
@@ -79,63 +69,58 @@ export default function MisReservas() {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {reservas.map((reserva) => (
-                            <div key={reserva.reservaId} className="bg-[#03292e] text-white rounded-[2.5rem] p-7 shadow-xl relative overflow-hidden flex flex-col h-full border border-white/5 group">
-                                
-                                {/* Badge de Estado Dinámico */}
-                                <div className="flex justify-between items-start mb-6 z-10">
-                                    <span className={`text-[10px] font-black uppercase px-4 py-1.5 rounded-full shadow-lg ${COLORES_ESTADO[reserva.estadoReserva] ?? 'bg-gray-400 text-white'}`}>
-                                        {reserva.estadoReserva === 'PENDIENTE_PAGO' ? 'Pendiente' : reserva.estadoReserva === 'CONFIRMADA' ? 'Confirmada' : reserva.estadoReserva === 'CANCELADA' ? 'Cancelada' : reserva.estadoReserva}
-                                    </span>
-                                    <span className={`opacity-50 group-hover:opacity-100 transition-opacity ${COLORES_ESTADO[reserva.estadoReserva] ? 'text-[#0ed1e8]' : 'text-gray-400'}`}>
-                                        {ICONO_ESTADO[reserva.estadoReserva] ?? <CheckCircle2 size={24} />}
-                                    </span>
-                                </div>
+                        {reservas.map((reserva) => {
+                            const id = reserva.reservaId ?? reserva.idReserva;
+                            const estado = getEstadoDisplay(reserva.estadoReserva, reserva.fecha);
 
-                                <div className="z-10 flex-1">
-                                    {/* Ruta corregida: reserva.cancha.establecimiento.nombreEstablecimiento */}
-                                    <h3 className="text-2xl font-black leading-tight mb-2 group-hover:text-[#0ed1e8] transition-colors">
-                                        {reserva.cancha?.establecimiento?.nombreEstablecimiento || "Cancha Deportiva"}
-                                    </h3>
-                                    <p className="text-[#0ed1e8] text-xs font-bold mb-4 opacity-70 tracking-widest uppercase">
-                                        Cancha: {reserva.cancha?.codigo || 'N/A'}
-                                    </p>
-                                    
-                                    <div className="space-y-3 text-sm font-medium opacity-80">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
-                                                <Calendar size={16} className="text-[#0ed1e8]" />
+                            return (
+                                <div key={id} className="bg-[#03292e] text-white rounded-[2.5rem] p-7 shadow-xl relative overflow-hidden flex flex-col h-full border border-white/5 group">
+
+                                    {/* Badge de Estado */}
+                                    <div className="flex justify-between items-start mb-6 z-10">
+                                        <span className={`text-[10px] font-black uppercase px-4 py-1.5 rounded-full shadow-lg ${estado.colorDark}`}>
+                                            {estado.label}
+                                        </span>
+                                        <span className={`opacity-50 group-hover:opacity-100 transition-opacity ${estado.colorDark.includes('text-[#03292e]') ? 'text-[#0ed1e8]' : 'text-white/50'}`}>
+                                            {ICONO_LABEL[estado.label] ?? <CheckCircle2 size={24} />}
+                                        </span>
+                                    </div>
+
+                                    <div className="z-10 flex-1">
+                                        <h3 className="text-2xl font-black leading-tight mb-2 group-hover:text-[#0ed1e8] transition-colors">
+                                            {reserva.cancha?.establecimiento?.nombreEstablecimiento || 'Cancha Deportiva'}
+                                        </h3>
+                                        <p className="text-[#0ed1e8] text-xs font-bold mb-4 opacity-70 tracking-widest uppercase">
+                                            Cancha: {reserva.cancha?.codigo || 'N/A'}
+                                        </p>
+
+                                        <div className="space-y-3 text-sm font-medium opacity-80">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
+                                                    <Calendar size={16} className="text-[#0ed1e8]" />
+                                                </div>
+                                                <span>{reserva.fecha}</span>
                                             </div>
-                                            {/* Ruta corregida: reserva.fecha */}
-                                            <span>{reserva.fecha}</span>
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
-                                                <Clock size={16} className="text-[#0ed1e8]" />
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
+                                                    <Clock size={16} className="text-[#0ed1e8]" />
+                                                </div>
+                                                <span>{reserva.horaInicio?.substring(0, 5)} - {reserva.horaFin?.substring(0, 5)}</span>
                                             </div>
-                                            {/* Formateo de horas quitando segundos */}
-                                            <span>{reserva.horaInicio?.substring(0,5)} - {reserva.horaFin?.substring(0,5)}</span>
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
-                                                <MapPin size={16} className="text-[#0ed1e8]" />
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
+                                                    <MapPin size={16} className="text-[#0ed1e8]" />
+                                                </div>
+                                                <span className="text-xs truncate">
+                                                    {reserva.cancha?.establecimiento?.direccion || 'Ubicación'}
+                                                </span>
                                             </div>
-                                            <span className="text-xs truncate">
-                                                {reserva.cancha?.establecimiento?.direccion || 'Ubicación'}
-                                            </span>
                                         </div>
                                     </div>
-                                </div>
 
-                                {/* Footer de la tarjeta */}
-                                <div className="mt-8 pt-6 border-t border-white/10 flex justify-between items-center z-10">
-                                    <div>
+                                    {/* Footer */}
+                                    <div className="mt-8 pt-6 border-t border-white/10 z-10">
                                         <p className="text-[10px] uppercase tracking-wider opacity-40 font-bold">Total Pagado</p>
-                                        {/*
-                                          Caso de prueba: reserva de 2h a $110.000/h debe mostrar $220.000.
-                                          Si el backend no retorna precioTotal, calculamos precioPorHora * duracionHoras
-                                          para no mostrar solo el valor por hora como si fuera el total.
-                                        */}
                                         <p className="text-xl font-black text-white">
                                             ${formatCurrency(
                                                 reserva.precioTotal ||
@@ -143,15 +128,11 @@ export default function MisReservas() {
                                             )}
                                         </p>
                                     </div>
-                                    <button className="p-3 rounded-xl bg-white/5 hover:bg-red-500/20 hover:text-red-400 transition-all text-white/30 cursor-not-allowed" title="Cancelar reserva (Próximamente)">
-                                        <Trash2 size={18} />
-                                    </button>
-                                </div>
 
-                                {/* Efecto decorativo de fondo */}
-                                <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-[#0ed1e8] opacity-[0.03] rounded-full group-hover:scale-150 transition-transform duration-700"></div>
-                            </div>
-                        ))}
+                                    <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-[#0ed1e8] opacity-[0.03] rounded-full group-hover:scale-150 transition-transform duration-700"></div>
+                                </div>
+                            );
+                        })}
                     </div>
                 )}
             </main>
