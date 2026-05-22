@@ -1,4 +1,4 @@
-import { Users, MessageSquare, LogOut, ShieldCheck } from 'lucide-react';
+import { Users, MessageSquare, LogOut, ShieldCheck, BarChart2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface Props {
@@ -16,8 +16,9 @@ export default function SidebarSuperAdmin({ seccionActiva, onCambiarSeccion }: P
     };
 
     const botones = [
-        { id: 'usuarios',    label: 'Usuarios',     icono: Users },
-        { id: 'comentarios', label: 'Comentarios',  icono: MessageSquare },
+        { id: 'estadisticas', label: 'Estadísticas', icono: BarChart2 },
+        { id: 'usuarios',     label: 'Usuarios',     icono: Users },
+        { id: 'comentarios',  label: 'Comentarios',  icono: MessageSquare },
     ];
 
     return (
