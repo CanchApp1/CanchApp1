@@ -1,5 +1,6 @@
 package com.canchapp.CanchAPP_Back.security;
 
+import com.canchapp.CanchAPP_Back.model.Usuario;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -55,6 +56,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
 
       if (jwtService.isTokenValid(jwt, userDetails)) {
+        if (userDetails instanceof Usuario usuario && Boolean.FALSE.equals(usuario.getEstado())) {
+          String tipoJson = usuario.getTipoSuspension() != null ? "\"" + usuario.getTipoSuspension() + "\"" : "null";
+          String fechaJson = usuario.getFechaReactivacion() != null ? "\"" + usuario.getFechaReactivacion() + "\"" : "null";
+          response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+          response.setContentType("application/json;charset=UTF-8");
+          response.getWriter().write("{\"error\":\"CUENTA_SUSPENDIDA\",\"tipoSuspension\":" + tipoJson + ",\"fechaReactivacion\":" + fechaJson + "}");
+          return;
+        }
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
           userDetails, null, userDetails.getAuthorities()
         );

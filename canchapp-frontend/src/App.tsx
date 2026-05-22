@@ -8,10 +8,12 @@ import CanchasPage from './Pages/CanchasPage';
 import Match from './Pages/Match';
 import Reservar from './Pages/Reservar';
 import DashboardPropietario from './Pages/DashboardPropietario';
+import DashboardSuperAdmin from './Pages/DashboardSuperAdmin';
 import PagosPage from './Pages/Pagos';
 import MisReservas from './Pages/MisReservas';
 import MisPartidos from './Pages/MisPartidos';
 import RecuperarPassword from './Pages/RecuperarPassword';
+import SuspensionOverlay from './Components/SuspensionOverlay';
 import { ToastProvider, useToast } from './context/ToastContext';
 import { ConfirmProvider } from './context/ConfirmContext';
 
@@ -41,6 +43,7 @@ function App() {
     <ToastProvider>
     <ConfirmProvider>
     <Router>
+      <SuspensionOverlay />
       <Routes>
         {/* Rutas Públicas */}
         <Route path="/" element={<Home />} />
@@ -86,6 +89,13 @@ function App() {
         <Route path="/DashboardPropietario" element={
           <ProtectedRoute allowedRoles={['Propietario', 'ROLE_PROPIETARIO']}>
             <DashboardPropietario />
+          </ProtectedRoute>
+        } />
+
+        {/* Rutas protegidas para SUPERADMIN */}
+        <Route path="/DashboardSuperAdmin" element={
+          <ProtectedRoute allowedRoles={['SUPERADMIN']}>
+            <DashboardSuperAdmin />
           </ProtectedRoute>
         } />
 

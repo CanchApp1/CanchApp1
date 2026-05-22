@@ -32,9 +32,16 @@ public class AuthService {
     );
 
     Usuario user = usuarioRepository.findByCorreo(request.getCorreo()).orElseThrow();
-    String token = jwtService.generateToken(user);
 
-    return AuthResponse.builder().token(token).build();
+    if (Boolean.FALSE.equals(user.getEstado())) {
+      return AuthResponse.builder()
+        .error("CUENTA_SUSPENDIDA")
+        .tipoSuspension(user.getTipoSuspension())
+        .fechaReactivacion(user.getFechaReactivacion() != null ? user.getFechaReactivacion().toString() : null)
+        .build();
+    }
+
+    return AuthResponse.builder().token(jwtService.generateToken(user)).build();
   }
 
   public AuthResponse register(RegisterRequest request) {
