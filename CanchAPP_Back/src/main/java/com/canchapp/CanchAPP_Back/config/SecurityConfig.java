@@ -40,6 +40,8 @@ public class SecurityConfig {
                             .requestMatchers("/v1/api/cancha/**").permitAll()
                             .requestMatchers("/v1/api/horario/**").permitAll()
                             .requestMatchers("/v1/api/publicacion/**").permitAll()
+                            .requestMatchers(HttpMethod.GET, "/v1/api/reserva/disponibles/**").permitAll()
+                            .requestMatchers(HttpMethod.GET, "/v1/api/duelos/**").permitAll()
                             .requestMatchers("/v1/api/auth/password/**").permitAll()
                             .requestMatchers("/v1/api/auth/**", "/auth/**").permitAll()
                             .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
