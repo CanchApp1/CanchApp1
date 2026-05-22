@@ -21,6 +21,8 @@ public class UsuarioDTO {
   @Builder.Default
   private Boolean estado = true;
   private Integer idUsuario;
+  private String tipoSuspension;
+  private LocalDate fechaReactivacion;
 
   @Builder.Default
   private LocalDateTime fechaCreacion = LocalDateTime.now();

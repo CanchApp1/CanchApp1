@@ -56,6 +56,13 @@ public class Usuario implements UserDetails{
   @Column(nullable = false, columnDefinition = "bit default 1")
   private Boolean estado;
 
+  // null = activo, "TEMPORAL" = ban temporal, "PERMANENTE" = ban permanente
+  @Column(name = "tipo_suspension", length = 20)
+  private String tipoSuspension;
+
+  @Column(name = "fecha_reactivacion")
+  private LocalDate fechaReactivacion;
+
   @CreatedDate
   @Column(name = "fecha_creacion", nullable = false)
   private LocalDateTime fechaCreacion;

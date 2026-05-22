@@ -13,6 +13,7 @@ public class ComentarioDTO {
 
   // Datos utiles para el FrontEnd
   private Integer establecimientoId;
-  private String nombreUsuario; // Para mostrar quien comento
+  private String nombreUsuario;
   private Integer usuarioId;
+  private String nombreEstablecimiento; // Útil para el panel SuperAdmin (lista global)
 }
