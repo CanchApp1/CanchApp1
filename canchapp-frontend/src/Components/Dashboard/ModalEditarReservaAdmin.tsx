@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, Calendar, Clock, FileText } from 'lucide-react';
 import { obtenerHorasDisponibles, obtenerHorasDisponiblesFin } from '../../services/reservaService';
+import { fechaLocal } from '../../utils/fecha';
 
 interface ReservaEditData {
     canchaId: number;
@@ -102,7 +103,7 @@ export default function ModalEditarReservaAdmin({ visible, reserva, establecimie
 
     if (!visible || !reserva) return null;
 
-    const hoy = new Date().toISOString().split('T')[0];
+    const hoy = fechaLocal();
 
     return (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">

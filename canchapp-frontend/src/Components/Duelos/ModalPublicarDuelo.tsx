@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { publicarDuelo } from '../../services/dueloService';
 import { type CanchaInfo } from '../../hooks/useDuelos';
 import FormPagoTarjeta from './FormPagoTarjeta';
+import { fechaLocal } from '../../utils/fecha';
 
 interface Props {
   isOpen: boolean;
@@ -18,8 +19,8 @@ function getFechaLimites() {
   const max = new Date(hoy);
   max.setDate(hoy.getDate() + 7);
   return {
-    min: min.toISOString().split('T')[0],
-    max: max.toISOString().split('T')[0],
+    min: fechaLocal(min),
+    max: fechaLocal(max),
   };
 }
 

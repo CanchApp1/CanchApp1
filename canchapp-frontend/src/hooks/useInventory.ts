@@ -5,6 +5,8 @@ import {
     actualizarCancha,
     eliminarCancha
 } from '../services/canchaService';
+import { useToast } from '../context/ToastContext';
+import { useConfirm } from '../context/ConfirmContext';
 
 // ============================================
 // HOOK DE INVENTARIO — Lógica CRUD de Canchas
@@ -14,8 +16,9 @@ import {
 export const useInventory = (establecimientoId: number | null) => {
     const [canchas, setCanchas] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
+    const { toast } = useToast();
+    const { confirm } = useConfirm();
 
-    // Datos de auditoría (quién está haciendo la operación)
     const emailUsuario = sessionStorage.getItem('userEmail') || 'sistema';
 
     // ─── 1. OBTENER (READ) ───────────────────────────
@@ -53,7 +56,7 @@ export const useInventory = (establecimientoId: number | null) => {
             return true;
         } catch (error) {
             console.error('Error en useInventory (crear):', error);
-            alert('Error al crear la cancha. Es posible que el código ya exista.');
+            toast('Error al crear la cancha. Es posible que el código ya exista.', 'error');
             return false;
         }
     };
@@ -82,11 +85,11 @@ export const useInventory = (establecimientoId: number | null) => {
     // ─── 4. ELIMINAR (DELETE) ────────────────────────
     const deleteCancha = async (id: number) => {
         if (canchas.length <= 1) {
-            alert('No puedes eliminar la única cancha de tu establecimiento. Debes tener al menos una activa.');
+            toast('No puedes eliminar la única cancha de tu establecimiento. Debes tener al menos una activa.', 'warning');
             return;
         }
 
-        if (!window.confirm('¿Estás seguro de que quieres eliminar esta cancha?')) return;
+        if (!await confirm('¿Estás seguro de que quieres eliminar esta cancha?', 'Eliminar', 'Cancelar')) return;
 
         try {
             await eliminarCancha(id);

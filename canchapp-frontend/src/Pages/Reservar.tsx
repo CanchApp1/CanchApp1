@@ -3,6 +3,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useMemo, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useToast } from '../context/ToastContext';
+import { fechaLocal } from '../utils/fecha';
 import Barra_de_navegacion from '../Components/Barra_navegacion';
 import { MapPin, Star, CheckCircle2, ChevronLeft, CalendarDays, Timer, User ,Users, ArrowRight} from 'lucide-react';
 import estadioFondo from '../assets/estadio_fondo.jpg';
@@ -10,11 +12,12 @@ import estadioFondo from '../assets/estadio_fondo.jpg';
 export default function ReservarPage() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   // RECUPERAMOS LOS DATOS DE NAVEGACIÓN
   const { cancha, fecha, hora } = location.state || {
     cancha: null,
-    fecha: new Date().toISOString().split('T')[0],
+    fecha: fechaLocal(),
     hora: "18:00"
   };
 
@@ -42,22 +45,15 @@ export default function ReservarPage() {
     }
   }, []);
 
-  // --- LÓGICA DE PRECIO ---
-  // --- LÓGICA DE PRECIO DINÁMICA ---
-  const precioFinal = useMemo(() => {
-      const canchaSeleccionadaData = cancha.canchas?.find(
-        (c: any) => c.canchaId === canchaEspecifica
-      );
+  // Precio por hora de la cancha seleccionada (o la primera como referencia)
+  const precioHora = useMemo(() => {
+    const seleccionada = cancha.canchas?.find(
+      (c: any) => c.canchaId === canchaEspecifica
+    );
+    return Number(seleccionada?.precioPorHora ?? cancha.canchas?.[0]?.precioPorHora ?? 0);
+  }, [cancha, canchaEspecifica]);
 
-      if (!canchaSeleccionadaData) {
-        const precioBaseSugerido = cancha.canchas?.[0]?.precioPorHora || 0;
-        return precioBaseSugerido * duracion;
-      }
-
-      const precioReal = canchaSeleccionadaData.precioPorHora;
-      
-    return precioReal * duracion;
-  }, [cancha, canchaEspecifica, duracion]); 
+  const precioFinal = precioHora * duracion;
 
   // --- FUNCIÓN PARA CONFIRMAR RESERVA (AHORA NAVEGA A PAGOS) ---
   const handleConfirmarReserva = () => {
@@ -67,17 +63,17 @@ export default function ReservarPage() {
 
     // 2. Validaciones iniciales
     if (!sUserId || sUserId === "undefined") {
-      alert("Error: No se encontró el ID de usuario. Por favor, cierra sesión y vuelve a entrar.");
+      toast("Error: No se encontró el ID de usuario. Por favor, cierra sesión y vuelve a entrar.", 'error');
       return;
     }
 
     if (!canchaEspecifica) {
-      alert("Por favor, selecciona una cancha específica (ej: A1, B2).");
+      toast("Por favor, selecciona una cancha específica (ej: A1, B2).", 'warning');
       return;
     }
 
     if (!token) {
-      alert("Tu sesión ha expirado. Inicia sesión nuevamente.");
+      toast("Tu sesión ha expirado. Inicia sesión nuevamente.", 'warning');
       navigate('/Login');
       return;
     }
@@ -85,7 +81,12 @@ export default function ReservarPage() {
     // 3. Preparar el DTO de la reserva para enviarlo a la pantalla de Pagos
     const [horas, minutos] = editHora.split(':').map(Number);
     const finH = horas + Number(duracion);
-    
+
+    if (finH >= 24) {
+      toast("El horario de fin supera la medianoche. Por favor elige una hora de inicio más temprana.", 'warning');
+      return;
+    }
+
     const horaInicioFormateada = `${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}:00`;
     const horaFinCalculada = `${finH.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}:00`;
 
@@ -259,11 +260,21 @@ export default function ReservarPage() {
                <p className="flex items-center gap-2"><CheckCircle2 size={16} className="text-[#0ed1e8]"/> Pago en el sitio</p>
                <p className="flex items-center gap-2"><CheckCircle2 size={16} className="text-[#0ed1e8]"/> Cancelación permitida</p>
             </div>
-            <div className="pt-6 border-t-2 border-gray-50">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Total por {duracion} h</p>
-              <p className="text-3xl font-black text-[#03292e] mt-1">
-                {formatCurrency(precioFinal)} <span className="text-sm font-normal">COP</span>
-              </p>
+            <div className="pt-6 border-t-2 border-gray-50 space-y-1">
+              <div className="flex justify-between text-sm text-gray-400 font-bold">
+                <span>Precio / hora</span>
+                <span>{formatCurrency(precioHora)} COP</span>
+              </div>
+              <div className="flex justify-between text-sm text-gray-400 font-bold">
+                <span>Duración</span>
+                <span>× {duracion} {duracion === 1 ? 'hora' : 'horas'}</span>
+              </div>
+              <div className="flex justify-between items-baseline pt-3 border-t border-gray-100">
+                <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Total</p>
+                <p className="text-3xl font-black text-[#03292e]">
+                  {formatCurrency(precioFinal)} <span className="text-sm font-normal">COP</span>
+                </p>
+              </div>
             </div>
           </div>
         </aside>

@@ -53,14 +53,18 @@ export const TimeSlotGrid = ({
                         // Vamos a intentar una comparación más flexible:
 
                         const estaDisponibleBackend = (horasDisponiblesBackend || []).includes(hora);
-                        // Lógica de hora pasada
+                        // Lógica de hora pasada — usar fecha local, no UTC
                         const ahora = new Date();
-                        const hoyStr = ahora.toISOString().split('T')[0];
+                        const hoyStr = [
+                            ahora.getFullYear(),
+                            String(ahora.getMonth() + 1).padStart(2, '0'),
+                            String(ahora.getDate()).padStart(2, '0'),
+                        ].join('-');
                         const [h, m] = hora.split(':');
                         const horaBloque = new Date();
-                        horaBloque.setHours(parseInt(h), parseInt(m), 0);
+                        horaBloque.setHours(parseInt(h), parseInt(m), 0, 0);
 
-                        const esPasada = (fechaSeleccionada === hoyStr) && (horaBloque < ahora);
+                        const esPasada = (fechaSeleccionada === hoyStr) && (horaBloque <= ahora);
                         const puedeSeleccionar = estaDisponibleBackend && !esPasada;
 
                         return (

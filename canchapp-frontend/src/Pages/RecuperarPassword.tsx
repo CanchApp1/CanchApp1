@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Mail, Lock, Key, ArrowLeft, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-// Importamos el servicio centralizado
-import { passwordService } from '../services/usuarioService'; 
+import { passwordService } from '../services/usuarioService';
+import { useToast } from '../context/ToastContext';
 
 export default function RecuperarPassword() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [paso, setPaso] = useState(1);
   const [loading, setLoading] = useState(false);
   const [mostrarPass, setMostrarPass] = useState(false);
@@ -26,7 +27,7 @@ export default function RecuperarPassword() {
       await passwordService.solicitar({ correo: formData.correo }); 
       setPaso(2);
     } catch (err) {
-      alert("No pudimos enviar el código. Verifica que el correo sea correcto.");
+      toast("No pudimos enviar el código. Verifica que el correo sea correcto.", 'error');
     } finally {
       setLoading(false);
     }
@@ -45,10 +46,10 @@ export default function RecuperarPassword() {
       if (esValido) {
         setPaso(3);
       } else {
-        alert("El código ingresado es incorrecto o ya expiró.");
+        toast("El código ingresado es incorrecto o ya expiró.", 'error');
       }
     } catch (err) {
-      alert("Error al validar el código.");
+      toast("Error al validar el código.", 'error');
     } finally {
       setLoading(false);
     }
@@ -67,7 +68,7 @@ export default function RecuperarPassword() {
         setPaso(4);
     } catch (err) {
         console.error(err);
-        alert("Error al restablecer la contraseña. Asegúrate de que el código siga siendo válido.");
+        toast("Error al restablecer la contraseña. Asegúrate de que el código siga siendo válido.", 'error');
     } finally {
         setLoading(false);
     }

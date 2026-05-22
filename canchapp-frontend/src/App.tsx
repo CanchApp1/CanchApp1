@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Autenticacion from './Pages/Autenticacion';
 import LoginPage from './Pages/LoginPage';
@@ -10,7 +11,9 @@ import DashboardPropietario from './Pages/DashboardPropietario';
 import PagosPage from './Pages/Pagos';
 import MisReservas from './Pages/MisReservas';
 import MisPartidos from './Pages/MisPartidos';
-import RecuperarPassword from './Pages/RecuperarPassword'; // <--- Importamos la nueva página
+import RecuperarPassword from './Pages/RecuperarPassword';
+import { ToastProvider, useToast } from './context/ToastContext';
+import { ConfirmProvider } from './context/ConfirmContext';
 
 // --- COMPONENTE DE PROTECCIÓN DE RUTAS ---
 interface ProtectedRouteProps {
@@ -19,21 +22,24 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
+  const { toast } = useToast();
   const token = sessionStorage.getItem('token');
   const userRole = sessionStorage.getItem('userRole');
+  const unauthorized = !!token && !allowedRoles.includes(userRole || '');
+
+  useEffect(() => {
+    if (unauthorized) toast("No tienes permiso para acceder a esta sección", 'warning');
+  }, []);
 
   if (!token) return <Navigate to="/Login" replace />;
-
-  if (!allowedRoles.includes(userRole || '')) {
-    alert("No tienes permiso para acceder a esta sección");
-    return <Navigate to="/" replace />;
-  }
-
+  if (unauthorized) return <Navigate to="/" replace />;
   return <>{children}</>;
 };
 
 function App() {
   return (
+    <ToastProvider>
+    <ConfirmProvider>
     <Router>
       <Routes>
         {/* Rutas Públicas */}
@@ -85,6 +91,8 @@ function App() {
 
       </Routes>
     </Router>
+    </ConfirmProvider>
+    </ToastProvider>
   );
 }
 

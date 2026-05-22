@@ -5,6 +5,7 @@ import {
     actualizarHorario,
     eliminarHorario,
 } from '../services/horarioService';
+import { useConfirm } from '../context/ConfirmContext';
 
 // ============================================
 // HOOK DE HORARIOS — Lógica CRUD de Horarios
@@ -28,6 +29,7 @@ export const DIAS_ESPANOL: Record<string, string> = {
 export const useHorarios = (establecimientoId: number | null) => {
     const [horarios, setHorarios] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
+    const { confirm } = useConfirm();
 
     const emailUsuario = sessionStorage.getItem('userEmail') || 'sistema';
 
@@ -90,7 +92,7 @@ export const useHorarios = (establecimientoId: number | null) => {
 
     // ─── 4. ELIMINAR (DELETE) ────────────────────────
     const deleteHorario = async (id: number) => {
-        if (!window.confirm('¿Estás seguro de eliminar este horario?')) return false;
+        if (!await confirm('¿Estás seguro de eliminar este horario?', 'Eliminar', 'Cancelar')) return false;
 
         try {
             await eliminarHorario(id);

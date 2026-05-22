@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useToast } from '../context/ToastContext';
 import Barra_de_navegacion from '../Components/Barra_navegacion';
 import { CreditCard, Lock, Calendar, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { crearReserva, crearIntentPago, confirmarReserva } from '../services/reservaService';
@@ -12,6 +13,7 @@ export default function PagosPage() {
     // Extraemos los datos del estado de navegación
     // precioAMostrar es el valor ya calculado (precio * duracion) enviado desde Reservar.tsx
     const { reservaDTO, cancha, fecha, hora, precioAMostrar } = location.state || {};
+    const { toast } = useToast();
     const [procesando, setProcesando] = useState(false);
     const [pagoExitoso, setPagoExitoso] = useState(false);
     const [confirmado, setConfirmado] = useState(false); // Nuevo estado para confirmación
@@ -62,23 +64,43 @@ export default function PagosPage() {
             if (!token || !reservaDTO) throw new Error("Faltan datos de sesión o reserva");
 
             // 1. Crear la reserva → obtenemos el reservaId
-            const reservaCreada = await crearReserva(reservaDTO, token);
+            let reservaCreada;
+            try {
+                reservaCreada = await crearReserva(reservaDTO, token);
+            } catch (err: any) {
+                const msg = err?.response?.data?.message || err?.response?.data || 'Error al crear la reserva';
+                console.error("[Paso 1 - crearReserva] Status:", err?.response?.status, "Body:", err?.response?.data);
+                throw new Error(`Paso 1: ${msg}`);
+            }
             const reservaId = reservaCreada?.objectResponse?.reservaId ?? reservaCreada?.reservaId;
-            if (!reservaId) throw new Error("No se obtuvo el ID de la reserva");
+            if (!reservaId) throw new Error("No se obtuvo el ID de la reserva del servidor");
 
-            // 2. Crear el intent de pago en Stripe (backend usa tarjeta de prueba)
-            const intentData = await crearIntentPago(reservaId);
+            // 2. Crear el intent de pago en Stripe
+            let intentData;
+            try {
+                intentData = await crearIntentPago(reservaId);
+            } catch (err: any) {
+                const msg = err?.response?.data?.message || err?.response?.data || 'Error al crear el intent de pago';
+                console.error("[Paso 2 - crearIntentPago] Status:", err?.response?.status, "Body:", err?.response?.data);
+                throw new Error(`Paso 2: ${msg}`);
+            }
             const stripePaymentId = intentData?.stripePaymentId ?? intentData?.objectResponse?.stripePaymentId;
-            if (!stripePaymentId) throw new Error("No se obtuvo el ID del pago de Stripe");
+            if (!stripePaymentId) throw new Error("No se obtuvo el ID de pago de Stripe");
 
             // 3. Confirmar el pago → backend actualiza reserva a CONFIRMADA
-            await confirmarReserva(stripePaymentId);
+            try {
+                await confirmarReserva(stripePaymentId);
+            } catch (err: any) {
+                const msg = err?.response?.data?.message || err?.response?.data || 'Error al confirmar el pago';
+                console.error("[Paso 3 - confirmarReserva] Status:", err?.response?.status, "Body:", err?.response?.data);
+                throw new Error(`Paso 3: ${msg}`);
+            }
 
             setPagoExitoso(true);
             setTimeout(() => navigate('/MisReservas'), 3000);
-        } catch (error) {
-            console.error(error);
-            alert("Hubo un error al procesar el pago o registrar la reserva. Intenta de nuevo.");
+        } catch (error: any) {
+            console.error("[Pago] Error final:", error?.message);
+            toast(error?.message || "Error al procesar el pago. Intenta de nuevo.", 'error');
         } finally {
             setProcesando(false);
         }

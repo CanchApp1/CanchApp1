@@ -12,7 +12,18 @@ export const useCanchas = () => {
         const cargarDatos = async () => {
             try {
                 const respuesta = await obtenerEstablecimientos();
-                const activas = (respuesta.objectResponse || []).filter((c: any) => c.estado === true || c.estado === 1);
+                const todos = respuesta.objectResponse || [];
+
+                console.log(`[useCanchas] Total establecimientos recibidos: ${todos.length}`,
+                    todos.map((e: any) => ({ id: e.establecimientoId, nombre: e.nombreEstablecimiento, estado: e.estado }))
+                );
+
+                const esActivo = (estado: any) =>
+                    estado === true || estado === 1 || estado === '1' || estado === 'ACTIVA' || estado === 'ACTIVO';
+
+                const activas = todos.filter((c: any) => esActivo(c.estado));
+
+                console.log(`[useCanchas] Establecimientos activos tras filtro: ${activas.length}`);
 
                 const detalladas = await Promise.all(
                     activas.map(async (est: any) => {
@@ -22,20 +33,18 @@ export const useCanchas = () => {
                             obtenerHorariosPorEstablecimiento(id)
                         ]);
 
-                        // Filtramos para que el jugador solo vea canchas OPERATIVAS
-                        const canchasActivas = (resCanchas || []).filter((c: any) => 
-                            c.estado === '1' || 
-                            c.estado === 'ACTIVA' || 
-                            c.estado === true
-                        );
+                        const canchasActivas = (resCanchas || []).filter((c: any) => esActivo(c.estado));
+
+                        console.log(`[useCanchas] Est. "${est.nombreEstablecimiento}": ${(resCanchas||[]).length} canchas totales, ${canchasActivas.length} activas`);
 
                         return { ...est, canchas: canchasActivas, horarios: resHorarios || [] };
                     })
                 );
 
-                // FILTRO DEFINITIVO: Si el establecimiento se quedó sin canchas activas, lo ocultamos
                 const finales = detalladas.filter(est => est.canchas.length > 0);
-                
+
+                console.log(`[useCanchas] Establecimientos visibles al jugador: ${finales.length}`);
+
                 setCanchas(finales);
             } catch (error) {
                 console.error("Error cargando canchas:", error);
