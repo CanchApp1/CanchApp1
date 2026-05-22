@@ -16,6 +16,7 @@ import VistaConfiguracion from '../Components/Dashboard/VistaConfiguracion';
 import VistaReservas from '../Components/Dashboard/VistaReservas';
 import VistaJugadores from '../Components/Dashboard/VistaJugadores';
 import VistaCalendario from '../Components/Dashboard/VistaCalendario';
+import VistaEstadisticas from '../Components/Dashboard/VistaEstadisticas';
 
 // ============================================
 // DASHBOARD PROPIETARIO — Página principal
@@ -68,6 +69,14 @@ export default function DashboardPropietario() {
                                 adminUserId={userId}
                             />
                         </div>
+                    )}
+
+                    {/* ─── SECCIÓN ESTADÍSTICAS ─────────── */}
+                    {seccionActiva === 'estadisticas' && (
+                        <VistaEstadisticas
+                            reservas={reservas}
+                            loading={loadingResGlobal}
+                        />
                     )}
 
                     {/* ─── SECCIÓN CANCHAS (CRUD) ────────── */}
