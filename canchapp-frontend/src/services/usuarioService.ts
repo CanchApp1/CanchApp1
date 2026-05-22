@@ -23,6 +23,16 @@ export type UsuarioData = {
  * Obtiene el detalle completo de un usuario por su ID
  * Útil para obtener el teléfono que no viene en el JWT
  */
+export const obtenerJugadores = async (): Promise<any[]> => {
+    try {
+        const response = await api.get('/usuarios/jugadores');
+        return response.data.objectResponse || response.data || [];
+    } catch (error) {
+        console.error('Error al obtener jugadores:', error);
+        return [];
+    }
+};
+
 export const obtenerUsuarioPorId = async (userId: number) => {
     try {
         const response = await api.get(`/usuarios/${userId}`);

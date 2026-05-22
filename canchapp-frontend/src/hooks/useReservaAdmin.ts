@@ -5,24 +5,28 @@ import {
     cancelarReserva as cancelarReservaService,
     crearReservaAdmin as crearReservaAdminService,
 } from '../services/reservaService';
+import { obtenerPagosPorEstablecimiento } from '../services/pagoService';
 
 export function useReservasAdmin(establecimientoId: number | null) {
     const { toast } = useToast();
     const [reservas, setReservas] = useState<any[]>([]);
+    const [pagos, setPagos] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        if (establecimientoId) {
-            cargarReservas();
-        }
+        if (establecimientoId) cargarTodo();
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [establecimientoId]);
 
-    const cargarReservas = async () => {
+    const cargarTodo = async () => {
         setLoading(true);
         try {
-            const data = await obtenerReservasPorEstablecimiento(establecimientoId!);
-            setReservas(data);
+            const [dataReservas, dataPagos] = await Promise.all([
+                obtenerReservasPorEstablecimiento(establecimientoId!),
+                obtenerPagosPorEstablecimiento(establecimientoId!),
+            ]);
+            setReservas(dataReservas);
+            setPagos(dataPagos);
         } catch {
             toast('No se pudieron cargar las reservas.', 'error');
         } finally {
@@ -30,25 +34,28 @@ export function useReservasAdmin(establecimientoId: number | null) {
         }
     };
 
+    const getPagoDeReserva = (reservaId: number) =>
+        pagos.find((p) => p.reservaId === reservaId) ?? null;
+
     const cancelarReserva = async (id: number) => {
         try {
             await cancelarReservaService(id);
-            await cargarReservas();
+            await cargarTodo();
             toast('Reserva cancelada correctamente.', 'success');
-        } catch (error) {
+        } catch (err) {
             toast('No se pudo cancelar la reserva. Intenta de nuevo.', 'error');
-            throw error;
+            throw err;
         }
     };
 
     const crearReserva = async (data: Parameters<typeof crearReservaAdminService>[0]) => {
         try {
             await crearReservaAdminService(data);
-            await cargarReservas();
+            await cargarTodo();
             toast('Reserva creada exitosamente.', 'success');
-        } catch (error) {
+        } catch (err) {
             toast('No se pudo crear la reserva. Verifica los datos.', 'error');
-            throw error;
+            throw err;
         }
     };
 
@@ -56,13 +63,13 @@ export function useReservasAdmin(establecimientoId: number | null) {
         try {
             await cancelarReservaService(id);
             await crearReservaAdminService(data);
-            await cargarReservas();
+            await cargarTodo();
             toast('Reserva modificada exitosamente.', 'success');
-        } catch (error) {
+        } catch (err) {
             toast('No se pudo modificar la reserva. Verifica los datos.', 'error');
-            throw error;
+            throw err;
         }
     };
 
-    return { reservas, loading, refrescar: cargarReservas, cancelarReserva, crearReserva, editarReserva };
+    return { reservas, pagos, loading, refrescar: cargarTodo, getPagoDeReserva, cancelarReserva, crearReserva, editarReserva };
 }

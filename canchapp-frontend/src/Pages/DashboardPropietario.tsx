@@ -14,6 +14,8 @@ import VistaCanchasPropietario from '../Components/Dashboard/VistaCanchasPropiet
 import VistaHorarios from '../Components/Dashboard/VistaHorarios';
 import VistaConfiguracion from '../Components/Dashboard/VistaConfiguracion';
 import VistaReservas from '../Components/Dashboard/VistaReservas';
+import VistaJugadores from '../Components/Dashboard/VistaJugadores';
+import VistaCalendario from '../Components/Dashboard/VistaCalendario';
 
 // ============================================
 // DASHBOARD PROPIETARIO — Página principal
@@ -41,7 +43,7 @@ export default function DashboardPropietario() {
     const { canchas, loading: loadingCanchas, addCancha, updateCancha, deleteCancha } = useInventory(realEstId);
     const { horarios, loading: loadingHorarios, diasSinHorario, addHorario, updateHorario, deleteHorario } = useHorarios(realEstId);
     const { establecimiento, loading: loadingConfig, refresh: refreshEstablecimiento } = useEstablecimiento(userId);
-    const { reservas, loading: loadingResGlobal, cancelarReserva, crearReserva, editarReserva } = useReservasAdmin(realEstId);
+    const { reservas, pagos, loading: loadingResGlobal, cancelarReserva, crearReserva, editarReserva } = useReservasAdmin(realEstId);
 
     return (
         <div className="flex min-h-screen bg-gray-50">
@@ -54,7 +56,17 @@ export default function DashboardPropietario() {
                     {seccionActiva === 'inicio' && (
                         <div className="space-y-8">
                             <CabeceraBienvenida saludo={saludo} nombreUsuario={nombreUsuario} />
-                            <PanelEstadisticas />
+                            <PanelEstadisticas
+                                reservas={reservas}
+                                canchas={canchas}
+                            />
+                            <VistaCalendario
+                                reservas={reservas}
+                                pagos={pagos}
+                                canchas={canchas}
+                                loading={loadingResGlobal}
+                                adminUserId={userId}
+                            />
                         </div>
                     )}
 
@@ -69,10 +81,10 @@ export default function DashboardPropietario() {
                         />
                     )}
 
-                    {/* NUEVA SECCIÓN RESERVAS */}
                     {seccionActiva === 'reservas' && (
                         <VistaReservas
                             reservas={reservas}
+                            pagos={pagos}
                             loading={loadingResGlobal}
                             adminUserId={userId}
                             canchas={canchas}
@@ -80,6 +92,23 @@ export default function DashboardPropietario() {
                             onCancelar={cancelarReserva}
                             onCrear={crearReserva}
                             onEditar={editarReserva}
+                        />
+                    )}
+
+                    {seccionActiva === 'calendario' && (
+                        <VistaCalendario
+                            reservas={reservas}
+                            pagos={pagos}
+                            canchas={canchas}
+                            loading={loadingResGlobal}
+                            adminUserId={userId}
+                        />
+                    )}
+
+                    {seccionActiva === 'jugadores' && (
+                        <VistaJugadores
+                            reservas={reservas}
+                            loading={loadingResGlobal}
                         />
                     )}
 

@@ -1,17 +1,20 @@
 import { useState } from 'react';
-import { X, Calendar, Clock, User, Hash, FileText, Pencil, XCircle } from 'lucide-react';
+import { X, Calendar, Clock, User, Hash, FileText, Pencil, XCircle, CreditCard, DollarSign } from 'lucide-react';
 import { getEstadoDisplay, puedeModificar } from '../../utils/reservaUtils';
 
 interface Props {
     visible: boolean;
     reserva: any | null;
+    pago: any | null;
     esDeAdmin: boolean;
     onCerrar: () => void;
     onEditar: () => void;
     onCancelar: (id: number) => Promise<void>;
 }
 
-export default function ModalDetalleReserva({ visible, reserva, esDeAdmin, onCerrar, onEditar, onCancelar }: Props) {
+const formatCurrency = (val: number) => new Intl.NumberFormat('de-DE').format(val);
+
+export default function ModalDetalleReserva({ visible, reserva, pago, esDeAdmin, onCerrar, onEditar, onCancelar }: Props) {
     const [confirmando, setConfirmando] = useState(false);
     const [cancelando, setCancelando] = useState(false);
 
@@ -22,7 +25,7 @@ export default function ModalDetalleReserva({ visible, reserva, esDeAdmin, onCer
     const modificable = puedeModificar(reserva.estadoReserva, reserva.fecha);
     const puedeActuar = esDeAdmin && modificable;
 
-    const razonDeshabilitado = () => {
+    const razon = () => {
         if (!esDeAdmin) return 'Solo puedes gestionar las reservas que creaste.';
         if (reserva.estadoReserva === 'CANCELADA') return 'Esta reserva ya fue cancelada.';
         if (!modificable) return 'No se pueden modificar reservas pasadas.';
@@ -40,14 +43,11 @@ export default function ModalDetalleReserva({ visible, reserva, esDeAdmin, onCer
         }
     };
 
-    const handleClose = () => {
-        setConfirmando(false);
-        onCerrar();
-    };
+    const handleClose = () => { setConfirmando(false); onCerrar(); };
 
     return (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-[2rem] shadow-xl w-full max-w-md p-8 flex flex-col gap-5">
+            <div className="bg-white rounded-[2rem] shadow-xl w-full max-w-md p-8 flex flex-col gap-4 max-h-[90vh] overflow-y-auto">
 
                 {/* Header */}
                 <div className="flex items-center justify-between">
@@ -62,28 +62,26 @@ export default function ModalDetalleReserva({ visible, reserva, esDeAdmin, onCer
                     </button>
                 </div>
 
-                {/* Info */}
-                <div className="flex flex-col gap-3">
+                {/* Info principal */}
+                <div className="flex flex-col gap-2.5">
                     <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-2xl">
                         <User size={16} className="text-[#0ed1e8] mt-0.5 shrink-0" />
                         <div>
                             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Cliente</p>
                             <p className="text-sm font-bold text-[#03292e]">{reserva.usuario?.nombre || 'Cliente Anónimo'}</p>
-                            {reserva.usuario?.correo && (
-                                <p className="text-xs text-gray-400">{reserva.usuario.correo}</p>
-                            )}
+                            {reserva.usuario?.correo && <p className="text-xs text-gray-400">{reserva.usuario.correo}</p>}
+                            {reserva.usuario?.numeroTelefono && <p className="text-xs text-gray-400">{reserva.usuario.numeroTelefono}</p>}
                         </div>
                     </div>
 
-                    <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-2xl">
-                        <Hash size={16} className="text-[#0ed1e8] mt-0.5 shrink-0" />
-                        <div>
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Cancha</p>
-                            <p className="text-sm font-bold text-[#03292e]">{reserva.cancha?.codigo ?? '—'}</p>
+                    <div className="flex gap-2.5">
+                        <div className="flex-1 flex items-start gap-3 p-4 bg-gray-50 rounded-2xl">
+                            <Hash size={16} className="text-[#0ed1e8] mt-0.5 shrink-0" />
+                            <div>
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Cancha</p>
+                                <p className="text-sm font-bold text-[#03292e]">{reserva.cancha?.codigo ?? '—'}</p>
+                            </div>
                         </div>
-                    </div>
-
-                    <div className="flex gap-3">
                         <div className="flex-1 flex items-start gap-3 p-4 bg-gray-50 rounded-2xl">
                             <Calendar size={16} className="text-[#0ed1e8] mt-0.5 shrink-0" />
                             <div>
@@ -91,16 +89,47 @@ export default function ModalDetalleReserva({ visible, reserva, esDeAdmin, onCer
                                 <p className="text-sm font-bold text-[#03292e]">{reserva.fecha}</p>
                             </div>
                         </div>
-                        <div className="flex-1 flex items-start gap-3 p-4 bg-gray-50 rounded-2xl">
-                            <Clock size={16} className="text-[#0ed1e8] mt-0.5 shrink-0" />
-                            <div>
-                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Horario</p>
-                                <p className="text-sm font-bold text-[#03292e]">
-                                    {reserva.horaInicio?.slice(0, 5)} — {reserva.horaFin?.slice(0, 5)}
-                                </p>
-                            </div>
+                    </div>
+
+                    <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-2xl">
+                        <Clock size={16} className="text-[#0ed1e8] mt-0.5 shrink-0" />
+                        <div>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Horario</p>
+                            <p className="text-sm font-bold text-[#03292e]">
+                                {reserva.horaInicio?.slice(0, 5)} — {reserva.horaFin?.slice(0, 5)}
+                            </p>
                         </div>
                     </div>
+
+                    {/* Información de pago */}
+                    {pago ? (
+                        <div className="flex gap-2.5">
+                            <div className="flex-1 flex items-start gap-3 p-4 bg-green-50 rounded-2xl">
+                                <DollarSign size={16} className="text-green-500 mt-0.5 shrink-0" />
+                                <div>
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Valor pagado</p>
+                                    <p className="text-sm font-bold text-[#03292e]">${formatCurrency(pago.valorPago)}</p>
+                                    <p className="text-[10px] text-gray-400">{pago.estadoPago}</p>
+                                </div>
+                            </div>
+                            <div className="flex-1 flex items-start gap-3 p-4 bg-green-50 rounded-2xl">
+                                <CreditCard size={16} className="text-green-500 mt-0.5 shrink-0" />
+                                <div>
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Método</p>
+                                    <p className="text-sm font-bold text-[#03292e]">Stripe</p>
+                                    {pago.horaPago && <p className="text-[10px] text-gray-400">{pago.horaPago?.slice(0, 5)}</p>}
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-2xl">
+                            <DollarSign size={16} className="text-gray-300 mt-0.5 shrink-0" />
+                            <div>
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pago</p>
+                                <p className="text-xs text-gray-400">Sin registro de pago (reserva manual)</p>
+                            </div>
+                        </div>
+                    )}
 
                     {reserva.descripcion && (
                         <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-2xl">
@@ -113,54 +142,32 @@ export default function ModalDetalleReserva({ visible, reserva, esDeAdmin, onCer
                     )}
 
                     {!puedeActuar && (
-                        <p className="text-[11px] text-gray-400 font-bold text-center bg-amber-50 text-amber-600 rounded-2xl px-4 py-3">
-                            {razonDeshabilitado()}
+                        <p className="text-[11px] font-bold text-center bg-amber-50 text-amber-600 rounded-2xl px-4 py-3">
+                            {razon()}
                         </p>
                     )}
                 </div>
 
                 {/* Acciones */}
                 {confirmando ? (
-                    <div className="flex flex-col gap-3">
-                        <p className="text-sm font-bold text-center text-gray-600">¿Confirmas la cancelación de esta reserva?</p>
+                    <div className="flex flex-col gap-3 pt-1">
+                        <p className="text-sm font-bold text-center text-gray-600">¿Confirmas la cancelación?</p>
                         <div className="flex gap-3">
-                            <button
-                                onClick={() => setConfirmando(false)}
-                                className="flex-1 py-3 rounded-2xl bg-gray-100 text-gray-500 text-sm font-bold hover:bg-gray-200 transition-all"
-                            >
-                                Volver
-                            </button>
-                            <button
-                                onClick={handleCancelar}
-                                disabled={cancelando}
-                                className="flex-1 py-3 rounded-2xl bg-red-500 text-white text-sm font-bold hover:bg-red-600 transition-all disabled:opacity-60"
-                            >
+                            <button onClick={() => setConfirmando(false)} className="flex-1 py-3 rounded-2xl bg-gray-100 text-gray-500 text-sm font-bold hover:bg-gray-200 transition-all">Volver</button>
+                            <button onClick={handleCancelar} disabled={cancelando} className="flex-1 py-3 rounded-2xl bg-red-500 text-white text-sm font-bold hover:bg-red-600 transition-all disabled:opacity-60">
                                 {cancelando ? 'Cancelando...' : 'Sí, cancelar'}
                             </button>
                         </div>
                     </div>
                 ) : (
                     <div className="flex gap-3 pt-1">
-                        <button
-                            onClick={handleClose}
-                            className="flex-1 py-3 rounded-2xl bg-gray-100 text-gray-500 text-sm font-bold hover:bg-gray-200 transition-all"
-                        >
-                            Cerrar
-                        </button>
-                        <button
-                            onClick={onEditar}
-                            disabled={!puedeActuar}
-                            title={!puedeActuar ? razonDeshabilitado() : ''}
-                            className="flex items-center justify-center gap-2 flex-1 py-3 rounded-2xl bg-blue-50 text-blue-500 text-sm font-bold hover:bg-blue-100 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
+                        <button onClick={handleClose} className="flex-1 py-3 rounded-2xl bg-gray-100 text-gray-500 text-sm font-bold hover:bg-gray-200 transition-all">Cerrar</button>
+                        <button onClick={onEditar} disabled={!puedeActuar} title={!puedeActuar ? razon() : ''}
+                            className="flex items-center justify-center gap-2 flex-1 py-3 rounded-2xl bg-blue-50 text-blue-500 text-sm font-bold hover:bg-blue-100 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
                             <Pencil size={15} /> Editar
                         </button>
-                        <button
-                            onClick={() => setConfirmando(true)}
-                            disabled={!puedeActuar}
-                            title={!puedeActuar ? razonDeshabilitado() : ''}
-                            className="flex items-center justify-center gap-2 flex-1 py-3 rounded-2xl bg-red-50 text-red-500 text-sm font-bold hover:bg-red-100 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
+                        <button onClick={() => setConfirmando(true)} disabled={!puedeActuar} title={!puedeActuar ? razon() : ''}
+                            className="flex items-center justify-center gap-2 flex-1 py-3 rounded-2xl bg-red-50 text-red-500 text-sm font-bold hover:bg-red-100 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
                             <XCircle size={15} /> Cancelar
                         </button>
                     </div>
