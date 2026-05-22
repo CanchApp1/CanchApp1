@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, X } from 'lucide-react'; // 🚀 Importado el icono X
 import TarjetaCancha from './TarjetaCancha';
 import ModalCancha from './ModalCancha';
 
@@ -80,11 +80,28 @@ export default function VistaCanchasPropietario({ canchas, loading, onCrear, onE
                 <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#0ed1e8] transition-colors" size={20} />
                 <input 
                     type="text" 
+                    id="input-busqueda-cancha"
                     placeholder="Buscar por código de cancha..." 
                     value={busqueda}
                     onChange={(e) => setBusqueda(e.target.value)}
-                    className="w-full pl-14 pr-6 py-4 bg-white border-2 border-gray-100 rounded-[2rem] outline-none focus:border-[#0ed1e8] focus:shadow-lg transition-all font-medium text-[#03292e]"
+                    // 🚀 pr-14 aumentado para dar espacio al botón X y evitar solapamiento
+                    className="w-full pl-14 pr-14 py-4 bg-white border-2 border-gray-100 rounded-[2rem] outline-none focus:border-[#0ed1e8] focus:shadow-lg transition-all font-medium text-[#03292e]"
                 />
+                
+                {/* 🚀 BOTÓN 'X' PARA LIMPIAR EL BUSCADOR */}
+                {busqueda.length > 0 && (
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setBusqueda('');
+                            document.getElementById('input-busqueda-cancha')?.focus();
+                        }}
+                        className="absolute right-5 top-1/2 -translate-y-1/2 p-1.5 rounded-full text-gray-400 hover:bg-gray-100 hover:text-[#03292e] transition-all active:scale-90"
+                        title="Limpiar búsqueda"
+                    >
+                        <X size={18} />
+                    </button>
+                )}
             </div>
 
             {/* Contenido */}
