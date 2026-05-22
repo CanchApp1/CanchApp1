@@ -133,3 +133,14 @@ export const crearReservaAdmin = async (data: {
         throw error;
     }
 };
+
+export const obtenerHistorialUsuario = async (idUsuario: number) => {
+  try {
+    const response = await api.get(`/reserva/historial/usuario/${idUsuario}`);
+    // Desempaquetamos usando objectResponse que maneja tu backend
+    return response.data.objectResponse || [];
+  } catch (error) {
+    console.error("Error al obtener el historial del usuario:", error);
+    throw error;
+  }
+};
