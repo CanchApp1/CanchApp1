@@ -4,9 +4,11 @@ import { Mail, Lock, Eye, ArrowLeft, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { loginUsuario } from '../services/authService';
+import { useToast } from '../context/ToastContext';
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   // 1. ESTADO DEL FORMULARIO (Mantenemos correo y contrasena)
   const [formData, setFormData] = useState({
@@ -57,7 +59,7 @@ export default function LoginPage() {
         }
 
         window.dispatchEvent(new Event("storage"));
-        alert("¡Login exitoso!");
+        toast("¡Login exitoso!", 'success');
 
         // REDIRECCIÓN ÚNICA (Solo una vez)
         if (rolFinal === 'Propietario' || rolFinal === 'ROLE_PROPIETARIO') {
@@ -68,7 +70,7 @@ export default function LoginPage() {
       }
     } catch (error) {
       console.error(error);
-      alert("Credenciales incorrectas.");
+      toast("Credenciales incorrectas.", 'error');
     }
   };
 

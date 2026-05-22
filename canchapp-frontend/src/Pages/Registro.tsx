@@ -2,9 +2,12 @@ import { User, Mail, Lock, ArrowLeft, Calendar, Phone, MapPin, Building2 } from 
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { registerUsuario, registerPropietario } from '../services/authService';
+import { useToast } from '../context/ToastContext';
+
 
 export default function Registro() {
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const [role, setRole] = useState<'jugador' | 'propietario'>('jugador');
 
@@ -28,6 +31,16 @@ export default function Registro() {
     });
   };
 
+  const passwordChecks = {
+    length: formData.contrasena.length >= 8,
+    hasUpper: /[A-Z]/.test(formData.contrasena),
+    hasNumber: /[0-9]/.test(formData.contrasena),
+    hasSpecial: /[!@#$%^&*(),.?":{}|<>]/.test(formData.contrasena),
+  };
+
+  const strengthScore = Object.values(passwordChecks).filter(Boolean).length;
+
+
   const calcularEdad = (fechaNacimiento: string) => {
     if (!fechaNacimiento) return 0;
     const hoy = new Date();
@@ -43,13 +56,20 @@ export default function Registro() {
   const handleRegistro = async (e: React.FormEvent) => {
     e.preventDefault();
 
+
+
     if (!formData.correo.includes('@')) {
-      alert("Por favor, ingresa una dirección de correo electrónico válida que contenga '@'.");
+      toast("Por favor, ingresa una dirección de correo electrónico válida que contenga '@'.", 'warning');
       return;
     }
 
     if (formData.contrasena !== formData.confirmarContrasena) {
-      alert("Las contraseñas no coinciden.");
+      toast("Las contraseñas no coinciden.", 'warning');
+      return;
+    }
+
+    if (strengthScore < 2 && formData.contrasena.length > 0) {
+      toast("La contraseña no es lo suficientemente segura. Por favor, cumple con más requisitos.", 'warning');
       return;
     }
 
@@ -88,12 +108,12 @@ export default function Registro() {
         await registerPropietario(datosPropietario);
       }
 
-      alert("¡Cuenta creada exitosamente! Ahora inicia sesión.");
+      toast("¡Cuenta creada exitosamente! Ahora inicia sesión.", 'success');
       navigate('/Login');
 
     } catch (error) {
       console.error("Error al registrar:", error);
-      alert("Hubo un error al crear la cuenta. Intenta de nuevo.");
+      toast("Hubo un error al crear la cuenta. Intenta de nuevo.", 'error');
     }
   };
 
@@ -208,6 +228,30 @@ export default function Registro() {
               </div>
             </div>
           </div>
+
+          {/* --- INDICADOR DE SEGURIDAD --- */}
+          {formData.contrasena.length > 0 && (
+            <div className="px-1 py-2 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                  Seguridad: {['Muy Débil', 'Débil', 'Media', 'Fuerte', 'Muy Fuerte'][strengthScore]}
+                </span>
+              </div>
+
+              <div className="flex gap-1.5">
+                {[1, 2, 3, 4].map((step) => (
+                  <div
+                    key={step}
+                    className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${
+                      strengthScore >= step
+                        ? (strengthScore <= 2 ? 'bg-red-400' : strengthScore === 3 ? 'bg-yellow-400' : 'bg-[#0ed1e8]')
+                        : 'bg-gray-200'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
 
           <button type="submit" className="w-full bg-[#03292e] text-white py-4 rounded-full font-bold text-lg hover:bg-[#0a4149] transition-all shadow-xl shadow-[#03292e]/20 active:scale-95 mt-6">
             Crear cuenta

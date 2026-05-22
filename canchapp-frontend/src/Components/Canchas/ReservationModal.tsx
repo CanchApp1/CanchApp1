@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAvailability } from '../../hooks/useAvailability';
 import { Calendar } from './Calendar';
 import { TimeSlotGrid } from './Time';
+import { useToast } from '../../context/ToastContext';
 
 interface ReservationModalProps {
     cancha: any;
@@ -11,9 +12,10 @@ interface ReservationModalProps {
 
 export const ReservationModal = ({ cancha, onClose }: ReservationModalProps) => {
     const navigate = useNavigate();
+    const { toast } = useToast();
 
-    // Obtenemos el ID de la primera cancha disponible en ese establecimiento
-    const firstCanchaId = cancha.canchas?.[0]?.canchaId;
+    // IDs de todas las canchas del establecimiento para calcular disponibilidad agregada
+    const canchaIds: number[] = cancha.canchas?.map((c: any) => c.canchaId as number) ?? [];
 
     const {
         fechaSeleccionada,
@@ -22,12 +24,12 @@ export const ReservationModal = ({ cancha, onClose }: ReservationModalProps) => 
         buscando,
         horaSeleccionada,
         setHoraSeleccionada
-    } = useAvailability(cancha.establecimientoId, firstCanchaId);
+    } = useAvailability(cancha.establecimientoId, canchaIds);
 
     const handleIrAReservar = () => {
         const token = sessionStorage.getItem('token');
         if (!token) return navigate('/login');
-        if (!horaSeleccionada) return alert("Selecciona una hora primero");
+        if (!horaSeleccionada) { toast("Selecciona una hora primero", 'warning'); return; }
 
         // Preparar info para la siguiente página
         const precioNumerico = cancha.canchas?.[0]?.precioPorHora || 0;

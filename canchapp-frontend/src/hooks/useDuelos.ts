@@ -35,19 +35,26 @@ export function useDuelos() {
     }
 
     if (resultEst.status === 'fulfilled') {
-      const ests: any[] = resultEst.value.objectResponse ?? resultEst.value ?? [];
+      const esActivo = (estado: any) =>
+        estado === true || estado === 1 || estado === '1' || estado === 'ACTIVA' || estado === 'ACTIVO';
+
+      const ests: any[] = (resultEst.value.objectResponse ?? resultEst.value ?? [])
+        .filter((e: any) => esActivo(e.estado));
+
       const canchasPorEst = await Promise.all(
         ests.map(async (est: any) => {
           try {
             const resCanchas = await obtenerCanchasPorEstablecimiento(est.establecimientoId);
-            return (resCanchas ?? []).map((c: any) => ({
-              canchaId: c.canchaId,
-              codigo: c.codigo,
-              precioPorHora: c.precioPorHora,
-              establecimientoId: est.establecimientoId,
-              nombreEstablecimiento: est.nombreEstablecimiento,
-              direccion: est.direccion,
-            }));
+            return (resCanchas ?? [])
+              .filter((c: any) => esActivo(c.estado))
+              .map((c: any) => ({
+                canchaId: c.canchaId,
+                codigo: c.codigo,
+                precioPorHora: c.precioPorHora,
+                establecimientoId: est.establecimientoId,
+                nombreEstablecimiento: est.nombreEstablecimiento,
+                direccion: est.direccion,
+              }));
           } catch {
             return [];
           }

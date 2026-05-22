@@ -42,7 +42,7 @@ export default function VistaReservasEstablecimiento({ reservas, loading, adminU
                 res.usuario?.nombre?.toLowerCase().includes(busqueda.toLowerCase()) ||
                 res.cancha?.codigo?.toLowerCase().includes(busqueda.toLowerCase());
 
-            const fechaReserva = new Date(res.fecha);
+            const fechaReserva = new Date(res.fecha + 'T00:00:00');
             const hoy = new Date();
             let matchTiempo = true;
 

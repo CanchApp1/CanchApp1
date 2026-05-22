@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Clock, Plus, Pencil, Trash2, AlertCircle, X, Save, CalendarDays } from 'lucide-react';
 import { DIAS_ESPANOL } from '../../hooks/useHorarios';
+import { useConfirm } from '../../context/ConfirmContext';
 
 // ============================================
 // VISTA DE HORARIOS — Gestión semanal
@@ -17,7 +18,7 @@ interface Props {
 }
 
 export default function VistaHorarios({ horarios, loading, diasSinHorario, onCrear, onEditar, onEliminar }: Props) {
-    // Estado para el formulario inline
+    const { confirm } = useConfirm();
     const [editando, setEditando] = useState<number | null>(null);
     const [creando, setCreando] = useState(false);
     const [formData, setFormData] = useState({ diaSemana: '', horaApertura: '', horaCierre: '' });
@@ -66,7 +67,7 @@ export default function VistaHorarios({ horarios, loading, diasSinHorario, onCre
             return;
         }
 
-        if (!window.confirm(`¿Estás seguro de que deseas guardar este horario para el ${DIAS_ESPANOL[formData.diaSemana]}?`)) {
+        if (!await confirm(`¿Estás seguro de que deseas guardar este horario para el ${DIAS_ESPANOL[formData.diaSemana]}?`, 'Guardar', 'Cancelar')) {
             return;
         }
 

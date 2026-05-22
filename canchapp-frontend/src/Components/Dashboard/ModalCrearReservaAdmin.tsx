@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, Calendar, Clock, FileText } from 'lucide-react';
 import { obtenerHorasDisponibles, obtenerHorasDisponiblesFin } from '../../services/reservaService';
+import { fechaLocal } from '../../utils/fecha';
 
 interface Cancha {
     canchaId: number;
@@ -93,7 +94,7 @@ export default function ModalCrearReservaAdmin({ visible, canchas, establecimien
     if (!visible) return null;
 
     const canchasActivas = canchas.filter(c => c.estado === '1' || c.estado?.toUpperCase() === 'ACTIVO');
-    const hoy = new Date().toISOString().split('T')[0];
+    const hoy = fechaLocal();
 
     return (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">

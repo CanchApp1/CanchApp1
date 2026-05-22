@@ -131,9 +131,16 @@ export default function MisReservas() {
                                 <div className="mt-8 pt-6 border-t border-white/10 flex justify-between items-center z-10">
                                     <div>
                                         <p className="text-[10px] uppercase tracking-wider opacity-40 font-bold">Total Pagado</p>
-                                        {/* Usamos precioTotal o el de la cancha como respaldo */}
+                                        {/*
+                                          Caso de prueba: reserva de 2h a $110.000/h debe mostrar $220.000.
+                                          Si el backend no retorna precioTotal, calculamos precioPorHora * duracionHoras
+                                          para no mostrar solo el valor por hora como si fuera el total.
+                                        */}
                                         <p className="text-xl font-black text-white">
-                                            ${formatCurrency(reserva.precioTotal || reserva.cancha?.precioPorHora || 0)}
+                                            ${formatCurrency(
+                                                reserva.precioTotal ||
+                                                (reserva.cancha?.precioPorHora ?? 0) * (reserva.duracionHoras || 1)
+                                            )}
                                         </p>
                                     </div>
                                     <button className="p-3 rounded-xl bg-white/5 hover:bg-red-500/20 hover:text-red-400 transition-all text-white/30 cursor-not-allowed" title="Cancelar reserva (Próximamente)">
