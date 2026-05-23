@@ -18,26 +18,36 @@ export type EstadoDisplay = {
 
 export const getEstadoDisplay = (estadoReserva: string, fecha: string): EstadoDisplay => {
     if (estadoReserva === 'CANCELADA') return {
+        nombre: 'Cancelada',
+        text: 'Cancelada',
         label: 'Cancelada',
         colorLight: 'bg-red-100 text-red-500',
         colorDark: 'bg-red-500/80 text-white',
     };
     if (esPasada(fecha)) return {
+        nombre: 'Jugada',
+        text: 'Jugada',
         label: 'Jugada',
         colorLight: 'bg-gray-100 text-gray-500',
         colorDark: 'bg-white/10 text-white/50',
     };
     if (esHoy(fecha)) return {
+        nombre: 'Hoy',
+        text: 'Hoy',
         label: 'Hoy',
         colorLight: 'bg-[#0ed1e8]/20 text-[#0a8f9c]',
         colorDark: 'bg-[#0ed1e8] text-[#03292e]',
     };
     if (estadoReserva === 'PENDIENTE_PAGO') return {
+        nombre: 'Pendiente pago',
+        text: 'Pendiente pago',
         label: 'Pendiente pago',
         colorLight: 'bg-orange-100 text-orange-600',
         colorDark: 'bg-orange-400 text-white',
     };
     return {
+        nombre: 'Confirmada',
+        text: 'Confirmada',
         label: 'Confirmada',
         colorLight: 'bg-green-100 text-green-600',
         colorDark: 'bg-[#0ed1e8] text-[#03292e]',
