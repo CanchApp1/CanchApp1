@@ -10,3 +10,13 @@ export const obtenerPagosPorEstablecimiento = async (establecimientoId: number):
         return [];
     }
 };
+
+export const obtenerPagosPorUsuario = async (usuarioId: number): Promise<any[]> => {
+    try {
+        const response = await api.get(`/pagos/usuario/${usuarioId}`);
+        return response.data?.objectResponse ?? response.data ?? [];
+    } catch (error) {
+        console.error('Error al obtener pagos del usuario:', error);
+        return [];
+    }
+};

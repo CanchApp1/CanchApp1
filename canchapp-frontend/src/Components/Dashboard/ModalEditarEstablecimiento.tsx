@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Building2, MapPin, Phone, ImagePlus, Trash2 } from 'lucide-react';
 import { actualizarEstablecimiento, subirImagenEstablecimiento } from '../../services/establecimientoService';
 
@@ -19,29 +20,45 @@ export default function ModalEditarEstablecimiento({ visible, establecimiento, o
     const [error, setError] = useState('');
     const inputRef = useRef<HTMLInputElement>(null);
 
+    const limpiarPreview = () => {
+        if (previewNuevo) {
+            URL.revokeObjectURL(previewNuevo);
+        }
+    };
+
     useEffect(() => {
         if (!visible || !establecimiento) return;
+
+        const datos = establecimiento.objectResponse ? establecimiento.objectResponse : establecimiento;
+        
         setForm({
-            nombreEstablecimiento: establecimiento.nombreEstablecimiento || '',
-            direccion: establecimiento.direccion || '',
-            numeroTelefono: establecimiento.numeroTelefono || '',
+            nombreEstablecimiento: datos.nombreEstablecimiento || '',
+            direccion: datos.direccion || '',
+            numeroTelefono: datos.numeroTelefono || '',
         });
-        setImagenActual(establecimiento.imagenUrl || null);
+        setImagenActual(datos.imagenUrl || null);
         setArchivoNuevo(null);
         setPreviewNuevo(null);
         setEliminarFoto(false);
         setError('');
+
+        return () => {
+            limpiarPreview();
+        };
     }, [visible, establecimiento]);
 
     const handleArchivo = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
+
+        limpiarPreview();
         setArchivoNuevo(file);
         setEliminarFoto(false);
         setPreviewNuevo(URL.createObjectURL(file));
     };
 
     const handleEliminarFoto = () => {
+        limpiarPreview(); 
         setArchivoNuevo(null);
         setPreviewNuevo(null);
         setEliminarFoto(true);
@@ -52,24 +69,44 @@ export default function ModalEditarEstablecimiento({ visible, establecimiento, o
         e.preventDefault();
         setGuardando(true);
         setError('');
+        
         try {
+            const idValido = establecimiento.objectResponse?.establecimientoId ?? establecimiento.establecimientoId;
+
+            if (!idValido && idValido !== 0) {
+                throw new Error('No se pudo determinar el ID del establecimiento.');
+            }
+
             let imagenUrl: string | null | undefined = undefined;
 
             if (archivoNuevo) {
                 imagenUrl = await subirImagenEstablecimiento(archivoNuevo);
             } else if (eliminarFoto) {
-                imagenUrl = '';
+                imagenUrl = null;
             }
 
-            await actualizarEstablecimiento(establecimiento.establecimientoId, {
-                ...form,
-                ...(imagenUrl !== undefined && { imagenUrl }),
-            });
+            const payload: any = {
+                nombreEstablecimiento: form.nombreEstablecimiento,
+                direccion: form.direccion,
+                numeroTelefono: form.numeroTelefono
+            };
 
-            onExito();
+            if (imagenUrl !== undefined) {
+                payload.imagenUrl = imagenUrl;
+            }
+
+            await actualizarEstablecimiento(idValido, payload);
+            
+            limpiarPreview();
+            
+            if (typeof onExito === 'function') {
+                onExito(); // Dispara la recarga limpia del Hook del padre
+            }
+
             onCerrar();
         } catch (err: any) {
-            setError(err?.response?.data || 'Error al guardar los cambios.');
+            const mensajeError = err?.response?.data?.message || err?.response?.data?.error || err.message || 'Error al guardar los cambios.';
+            setError(typeof mensajeError === 'object' ? JSON.stringify(mensajeError) : mensajeError);
         } finally {
             setGuardando(false);
         }
@@ -77,7 +114,13 @@ export default function ModalEditarEstablecimiento({ visible, establecimiento, o
 
     if (!visible) return null;
 
-    const fotoActiva = previewNuevo || (!eliminarFoto ? imagenActual : null);
+    const obtenerUrlFotoActiva = () => {
+        if (previewNuevo) return previewNuevo;
+        if (eliminarFoto || !imagenActual) return null;
+        return imagenActual;
+    };
+
+    const fotoActiva = obtenerUrlFotoActiva();
 
     return (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -88,7 +131,7 @@ export default function ModalEditarEstablecimiento({ visible, establecimiento, o
                         <h2 className="text-xl font-black text-[#03292e]">Editar establecimiento</h2>
                         <p className="text-xs text-gray-400 mt-0.5">Actualiza los datos de tu local</p>
                     </div>
-                    <button onClick={onCerrar} className="p-2 hover:bg-gray-100 rounded-xl transition-all">
+                    <button type="button" onClick={onCerrar} className="p-2 hover:bg-gray-100 rounded-xl transition-all">
                         <X size={20} className="text-gray-400" />
                     </button>
                 </div>
@@ -101,7 +144,6 @@ export default function ModalEditarEstablecimiento({ visible, establecimiento, o
 
                 <form onSubmit={handleGuardar} className="flex flex-col gap-4">
 
-                    {/* Foto */}
                     <div className="flex flex-col gap-2">
                         <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
                             <ImagePlus size={13} /> Foto del establecimiento
@@ -114,7 +156,7 @@ export default function ModalEditarEstablecimiento({ visible, establecimiento, o
                                 <button
                                     type="button"
                                     onClick={handleEliminarFoto}
-                                    className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-lg hover:bg-red-600 transition-all"
+                                    className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-lg hover:bg-red-600 transition-all shadow-md"
                                 >
                                     <Trash2 size={14} />
                                 </button>
@@ -130,16 +172,6 @@ export default function ModalEditarEstablecimiento({ visible, establecimiento, o
                             </button>
                         )}
 
-                        {!fotoActiva && (
-                            <button
-                                type="button"
-                                onClick={() => inputRef.current?.click()}
-                                className="text-xs text-[#0ed1e8] font-bold hover:underline text-left"
-                            >
-                                Seleccionar archivo...
-                            </button>
-                        )}
-
                         <input
                             ref={inputRef}
                             type="file"
@@ -149,7 +181,6 @@ export default function ModalEditarEstablecimiento({ visible, establecimiento, o
                         />
                     </div>
 
-                    {/* Nombre */}
                     <div className="flex flex-col gap-2">
                         <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
                             <Building2 size={13} /> Nombre del local
@@ -163,7 +194,6 @@ export default function ModalEditarEstablecimiento({ visible, establecimiento, o
                         />
                     </div>
 
-                    {/* Dirección */}
                     <div className="flex flex-col gap-2">
                         <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
                             <MapPin size={13} /> Dirección
@@ -177,7 +207,6 @@ export default function ModalEditarEstablecimiento({ visible, establecimiento, o
                         />
                     </div>
 
-                    {/* Teléfono */}
                     <div className="flex flex-col gap-2">
                         <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
                             <Phone size={13} /> Teléfono
@@ -190,7 +219,7 @@ export default function ModalEditarEstablecimiento({ visible, establecimiento, o
                         />
                     </div>
 
-                    <div className="flex gap-3 pt-1">
+                    <div className="flex gap-3 pt-3">
                         <button
                             type="button"
                             onClick={onCerrar}
@@ -201,7 +230,7 @@ export default function ModalEditarEstablecimiento({ visible, establecimiento, o
                         <button
                             type="submit"
                             disabled={guardando}
-                            className="flex-1 py-3 rounded-2xl bg-[#03292e] text-white text-sm font-bold hover:bg-[#0ed1e8] hover:text-[#03292e] transition-all disabled:opacity-60"
+                            className="flex-1 py-3 rounded-2xl bg-[#03292e] text-white text-sm font-bold hover:bg-[#0ed1e8] hover:text-[#03292e] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                         >
                             {guardando ? 'Guardando...' : 'Guardar cambios'}
                         </button>

@@ -7,8 +7,8 @@ import { DueloCard } from '../Components/Duelos/DueloCard';
 import ModalCalificar from '../Components/ModalCalificar';
 import { obtenerHistorialUsuario } from '../services/reservaService';
 import { listarDuelosDisponibles } from '../services/dueloService';
+import { obtenerPagosPorUsuario } from '../services/pagoService';
 
-// Extendemos las opciones de pestañas para incluir "comentarios"
 type Tab = 'proximos' | 'jugados' | 'duelos' | 'comentarios';
 
 export default function MisPartidos() {
@@ -19,22 +19,20 @@ export default function MisPartidos() {
   const [selectedReservaId, setSelectedReservaId] = useState<number | null>(null);
   const [expandedCardId, setExpandedCardId] = useState<number | null>(null);
 
-  // Estado para la notificación tipo viñeta (Toast) al estilo CanchAPP
   const [toast, setToast] = useState<{ show: boolean; message: string }>({ show: false, message: '' });
 
-  // Registro de partidos que ya fueron comentados (Persistencia local)
   const [partidosComentados, setPartidosComentados] = useState<Record<number, boolean>>(() => {
     const saved = localStorage.getItem('canchapp_partidos_comentados');
     return saved ? JSON.parse(saved) : {};
   });
 
-  // Lista simulada o acumulada de los comentarios del usuario para el nuevo apartado
   const [misComentariosHistoricos, setMisComentariosHistoricos] = useState<any[]>([]);
 
-  // Estados de datos del Backend
+  // Estados de datos puros del Backend
   const [partidosProximos, setPartidosProximos] = useState<any[]>([]);
   const [partidosJugados, setPartidosJugados] = useState<any[]>([]);
   const [misDuelos, setMisDuelos] = useState<any[]>([]);
+  const [misPagos, setMisPagos] = useState<any[]>([]); // 👈 Estado para guardar la lista de pagos reales
   const [loading, setLoading] = useState<boolean>(true);
 
   const currentUserId = parseInt(sessionStorage.getItem('userId') ?? '0', 10);
@@ -45,10 +43,25 @@ export default function MisPartidos() {
         setLoading(false);
         return;
       }
+
       try {
         setLoading(true);
-        const resReservas = await obtenerHistorialUsuario(currentUserId);
+
+        // Consultamos las reservas y los pagos del usuario simultáneamente
+        const [resReservas, resPagos] = await Promise.all([
+          obtenerHistorialUsuario(currentUserId),
+          obtenerPagosPorUsuario(currentUserId)
+        ]);
+        
+        // 🔍 ÚNICOS LOGS DE CONTROL PARA AUDITORÍA REAL DE TU BD
+        console.log("📋 [CanchAPP API] Reservas del usuario:", resReservas);
+        console.log("💰 [CanchAPP API] Pagos del usuario:", resPagos);
+        console.log("💰 [CanchAPP API] Pagos del usuario:", resPagos);
+
         const listaReservas = resReservas?.objectResponse ?? resReservas ?? [];
+        const listaPagos = resPagos ?? [];
+        
+        setMisPagos(listaPagos);
 
         const hoy = new Date();
         hoy.setHours(0, 0, 0, 0);
@@ -58,35 +71,35 @@ export default function MisPartidos() {
         const comentariosDetectados: any[] = [];
 
         listaReservas.forEach((reserva: any) => {
-          const fechaStr = reserva.fecha;
-          const fechaReserva = new Date(fechaStr + 'T00:00:00');
+          const fechaReserva = new Date(reserva.fecha + 'T00:00:00');
 
           if (fechaReserva >= hoy) {
             proximos.push(reserva);
           } else {
             jugados.push(reserva);
-            // Si el backend te llega a devolver un comentario previo en la reserva, lo mapeamos aquí:
+            
             if (reserva.comentarioTexto || partidosComentados[reserva.reservaId]) {
               comentariosDetectados.push({
                 id: reserva.reservaId,
-                establecimientoNombre: reserva.cancha?.establecimiento?.nombre || "Sede Deportiva",
+                establecimientoNombre: reserva.cancha?.establecimiento?.nombreEstablecimiento,
                 fecha: reserva.fecha,
-                texto: reserva.comentarioTexto || "Comentario registrado con éxito."
+                texto: reserva.comentarioTexto
               });
             }
           }
         });
-
+        
         setPartidosProximos(proximos);
         setPartidosJugados(jugados);
         setMisComentariosHistoricos(comentariosDetectados);
 
+        // Obtener tablero de duelos
         const todosLosDuelos = await listarDuelosDisponibles();
         const filtradosPropios = todosLosDuelos.filter((duelo: any) => duelo.creadorId === currentUserId);
         setMisDuelos(filtradosPropios);
 
       } catch (error) {
-        console.error("Error conectando con los endpoints:", error);
+        console.error("Error en la carga de datos:", error);
       } finally {
         setLoading(false);
       }
@@ -95,7 +108,6 @@ export default function MisPartidos() {
     cargarDatos();
   }, [currentUserId, partidosComentados]);
 
-  // Lanzador de la viñeta de éxito a la derecha
   const mostrarNotificacion = (mensaje: string) => {
     setToast({ show: true, message: mensaje });
     setTimeout(() => setToast({ show: false, message: '' }), 4000);
@@ -107,20 +119,19 @@ export default function MisPartidos() {
     setModalOpen(true);
   };
 
-  // Callback cuando el modal guarda con éxito
   const handleComentarioGuardado = (textoComentario: string) => {
     if (selectedReservaId) {
       const nuevosComentados = { ...partidosComentados, [selectedReservaId]: true };
       setPartidosComentados(nuevosComentados);
       localStorage.setItem('canchapp_partidos_comentados', JSON.stringify(nuevosComentados));
       
-      // Añadir dinámicamente al feed de tus comentarios
       const partidoAsociado = partidosJugados.find(p => p.reservaId === selectedReservaId);
+
       setMisComentariosHistoricos([
         {
           id: selectedReservaId,
-          establecimientoNombre: partidoAsociado?.cancha?.establecimiento?.nombre || "Sede Deportiva",
-          fecha: partidoAsociado?.fecha || "Hoy",
+          establecimientoNombre: partidoAsociado?.cancha?.establecimiento?.nombreEstablecimiento,
+          fecha: partidoAsociado?.fecha,
           texto: textoComentario
         },
         ...misComentariosHistoricos
@@ -134,22 +145,22 @@ export default function MisPartidos() {
   };
 
   const calcularDuracion = (inicio?: string, fin?: string): string => {
-    if (!inicio || !fin) return "1 Hora";
+    if (!inicio || !fin) return "";
     try {
       const [h1, m1] = inicio.split(':').map(Number);
       const [h2, m2] = fin.split(':').map(Number);
       const totalMinutos = (h2 * 60 + m2) - (h1 * 60 + m1);
-      if (totalMinutos <= 0) return "1 Hora";
+      if (totalMinutos <= 0) return "";
       return `${Math.floor(totalMinutos / 60)} Horas`;
-    } catch { return "1 Hora"; }
+    } catch { return ""; }
   };
 
   return (
     <div className="min-h-screen bg-gray-50/50 pb-12 relative overflow-x-hidden">
       
-      {/* VIÑETA FLOTANTE DE ÉXITO (TOAST) AL ESTILO CANCHAPP */}
+      {/* TOAST */}
       {toast.show && (
-        <div className="fixed top-6 right-6 z-[200] bg-[#03292e] text-white px-6 py-4 rounded-2xl shadow-2xl border-l-4 border-[#0ed1e8] flex items-center gap-3 animate-fade-in-left border border-white/10 transition-all max-w-sm">
+        <div className="fixed top-6 right-6 z-[200] bg-[#03292e] text-white px-6 py-4 rounded-2xl shadow-2xl border-l-4 border-[#0ed1e8] flex items-center gap-3 border border-white/10 max-w-sm">
           <CheckCircle className="text-[#0ed1e8] shrink-0" size={22} />
           <div>
             <p className="text-xs font-black uppercase tracking-wider text-[#0ed1e8]">Proceso Exitoso</p>
@@ -175,7 +186,7 @@ export default function MisPartidos() {
 
       {/* CONTENEDOR CENTRAL */}
       <div className="max-w-5xl mx-auto px-4 -mt-12">
-        {/* NAVEGACIÓN POR PESTAÑAS */}
+        {/* PESTAÑAS */}
         <div className="bg-white p-2 rounded-2xl md:rounded-full shadow-md flex flex-wrap md:flex-nowrap gap-1 border border-gray-100 mb-8">
           <button
             onClick={() => setTab('proximos')}
@@ -207,19 +218,26 @@ export default function MisPartidos() {
         {loading ? (
           <div className="text-center py-20 bg-white rounded-3xl border border-gray-100 shadow-sm">
             <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-[#0ed1e8] mx-auto mb-4"></div>
-            <p className="text-gray-400 font-bold text-sm uppercase tracking-wider">Sincronizando feed...</p>
+            <p className="text-gray-400 font-bold text-sm uppercase tracking-wider">Cargando datos...</p>
           </div>
         ) : (
           <div className="space-y-4">
             
-            {/* VISTA DE PARTIDOS (PRÓXIMOS Y HISTORIAL) */}
+            {/* VISTA DE PARTIDOS */}
             {(tab === 'proximos' || tab === 'jugados') && (tab === 'proximos' ? partidosProximos : partidosJugados).map((partido) => {
               const cardId = partido.reservaId || partido.id;
               const isOpen = expandedCardId === cardId;
               const yaComentado = partidosComentados[cardId] === true;
 
-              const nombreSede = partido.cancha?.establecimiento?.nombre || "Sede Deportiva";
-              const idEstablecimiento = partido.cancha?.establecimiento?.establecimientoId || 1;
+              // Extraídos directamente desde la relación de la base de datos
+              const nombreSede = partido.cancha?.establecimiento?.nombreEstablecimiento;
+              const idEstablecimiento = partido.cancha?.establecimiento?.idEstablecimiento;
+
+              // 👈 CRUCE DE DATOS EN TIEMPO REAL: Buscamos el pago correspondiente a este reservaId
+              const pagoAsociado = misPagos.find(
+                (p: any) => p.reservaId === cardId || p.reserva?.reservaId === cardId
+              );
+              const totalPagadoReal = pagoAsociado?.valorPago;
 
               return (
                 <div key={cardId} className="flex flex-col gap-2 bg-white rounded-[2rem] border border-gray-100 p-2 shadow-sm">
@@ -240,7 +258,6 @@ export default function MisPartidos() {
                       {isOpen ? 'Ocultar detalles ↑' : 'Ver detalles e información ↓'}
                     </button>
 
-                    {/* BOTÓN DINÁMICO: Bloquea si ya se hizo reseña de este partido */}
                     {tab === 'jugados' && (
                       <button
                         disabled={yaComentado}
@@ -276,7 +293,11 @@ export default function MisPartidos() {
                         <div className="p-2 bg-white rounded-xl shrink-0"><DollarSign size={16} className="text-green-500" /></div>
                         <div>
                           <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Total Pagado</p>
-                          <p className="font-black text-green-600">${(partido.precioTotal || 0).toLocaleString('es-CO')} COP</p>
+                          <p className="font-black text-green-600">
+                            {totalPagadoReal !== undefined && totalPagadoReal !== null 
+                              ? `$${totalPagadoReal.toLocaleString('es-CO')} COP` 
+                              : ''} 
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -290,7 +311,7 @@ export default function MisPartidos() {
               <DueloCard key={duelo.dueloId || duelo.id} duelo={duelo} onVerDetalle={(d) => navigate(`/duelos/detalle/${d.dueloId}`)} onAceptar={() => {}} />
             ))}
 
-            {/* NUEVA VISTA: APARTADO "MIS COMENTARIOS" */}
+            {/* APARTADO "MIS COMENTARIOS" */}
             {tab === 'comentarios' && (
               <div className="space-y-3">
                 {misComentariosHistoricos.map((com) => (
@@ -326,7 +347,6 @@ export default function MisPartidos() {
         )}
       </div>
 
-      {/* MODAL SIN ALERT() DE INTERRUPCIÓN */}
       <ModalCalificar
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}

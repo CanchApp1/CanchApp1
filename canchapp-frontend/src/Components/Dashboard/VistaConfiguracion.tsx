@@ -17,6 +17,7 @@ interface Props {
 export default function VistaConfiguracion({ establecimiento, loading, onPerfilActualizado }: Props) {
     const [modalEditar, setModalEditar] = useState(false);
     const [modalEstablecimiento, setModalEstablecimiento] = useState(false);
+
     if (loading) {
         return (
             <div className="flex flex-col items-center py-20 animate-in fade-in duration-500">
@@ -33,9 +34,12 @@ export default function VistaConfiguracion({ establecimiento, loading, onPerfilA
                 <p className="text-gray-400 font-bold text-lg">No se encontraron datos del establecimiento.</p>
             </div>
         );
-    }
+    } 
 
-    const usuario = establecimiento.usuario;
+    // Desenvoltura correcta de los datos
+    const datos = establecimiento.objectResponse ? establecimiento.objectResponse : establecimiento;
+    const usuario = datos.usuario || {};
+    const fotoUrl = datos.imagenUrl || null;
 
     return (
         <div className="animate-in slide-in-from-right-4 duration-500 space-y-8">
@@ -67,7 +71,7 @@ export default function VistaConfiguracion({ establecimiento, loading, onPerfilA
                         <p className="text-gray-400 text-sm">Datos de tu negocio</p>
                     </div>
                     <div className="ml-auto flex items-center gap-3">
-                        {establecimiento.estado ? (
+                        {datos.estado ? ( // Corregido para leer de datos
                             <span className="px-4 py-1.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-200">
                                 ✅ Activo
                             </span>
@@ -86,10 +90,10 @@ export default function VistaConfiguracion({ establecimiento, loading, onPerfilA
                     </div>
                 </div>
 
-                {/* Foto del establecimiento */}
-                {establecimiento.imagenUrl ? (
+                {/* Foto del establecimiento — Corregido para usar fotoUrl */}
+                {fotoUrl ? (
                     <div className="w-full h-48 rounded-2xl overflow-hidden mb-6 border border-gray-100">
-                        <img src={establecimiento.imagenUrl} alt={establecimiento.nombreEstablecimiento} className="w-full h-full object-cover" />
+                        <img src={fotoUrl} alt={datos.nombreEstablecimiento} className="w-full h-full object-cover" />
                     </div>
                 ) : (
                     <button
@@ -105,23 +109,23 @@ export default function VistaConfiguracion({ establecimiento, loading, onPerfilA
                     <InfoField
                         icono={<Building2 size={16} />}
                         etiqueta="Nombre del Local"
-                        valor={establecimiento.nombreEstablecimiento}
+                        valor={datos.nombreEstablecimiento} // Corregido
                     />
                     <InfoField
                         icono={<MapPin size={16} />}
                         etiqueta="Dirección"
-                        valor={establecimiento.direccion}
+                        valor={datos.direccion} // Corregido
                     />
                     <InfoField
                         icono={<Phone size={16} />}
                         etiqueta="Teléfono"
-                        valor={establecimiento.numeroTelefono}
+                        valor={datos.numeroTelefono} // Corregido
                     />
                     <InfoField
                         icono={<Calendar size={16} />}
                         etiqueta="Fecha de Registro"
-                        valor={establecimiento.fechaCreacion
-                            ? new Date(establecimiento.fechaCreacion).toLocaleDateString('es-CO', {
+                        valor={datos.fechaCreacion // Corregido
+                            ? new Date(datos.fechaCreacion).toLocaleDateString('es-CO', {
                                 year: 'numeric', month: 'long', day: 'numeric'
                             })
                             : 'No disponible'}
