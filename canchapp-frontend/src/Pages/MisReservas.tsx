@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Barra_de_navegacion from '../Components/Barra_navegacion';
 import { obtenerMisReservas } from '../services/reservaService';
 import { obtenerPagosPorUsuario } from '../services/pagoService'; 

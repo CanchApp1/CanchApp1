@@ -9,8 +9,8 @@ export const esHoy = (fecha: string): boolean => {
 };
 
 export type EstadoDisplay = {
-    nombre: string;
-    text: string;
+    nombre?: string;
+    text?: string;
     label: string;
     colorLight: string;
     colorDark: string;
