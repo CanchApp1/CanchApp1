@@ -9,11 +9,11 @@ export default function CabeceraBienvenida({ saludo, nombreUsuario }: Props) {
             <div>
                 <p className="text-gray-500 font-medium mb-1">Panel de Control</p>
                 <h2 className="text-3xl font-extrabold text-[#03292e]">
-                    ¡{saludo}, <span className="text-[#0ed1e8]">{nombreUsuario}</span>! 👋
+                    ¡{saludo}, <span className="text-[#0ed1e8]">{nombreUsuario}</span>! 
                 </h2>
                 <p className="text-gray-600 mt-2">Bienvenido a tu panel de gestión.</p>
             </div>
-            <div className="hidden md:block h-24 w-24 bg-[#e6effc] rounded-full flex items-center justify-center text-4xl">🏟️</div>
+            <div className="hidden md:block h-24 w-24 bg-[#e6effc] rounded-full flex items-center justify-center text-4xl"></div>
         </div>
     );
 }
