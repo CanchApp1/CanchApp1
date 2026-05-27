@@ -69,7 +69,7 @@ public class SecurityConfig {
     "http://localhost:5173",        // Vite dev
     "http://localhost:80",
     "http://mvcpop.space",
-    "http://www.mvcpop.space"
+    "http://www.mvcpop.space",
     "http://localhost:3101",
     "https://nzf80hm5-3101.use2.devtunnels.ms"  // ← tu devtunnel
 ));
