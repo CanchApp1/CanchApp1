@@ -14,9 +14,10 @@ interface Props {
     onCrear: (datos: { codigo: string; precioPorHora: number; estado: string }) => Promise<boolean | undefined>;
     onEditar: (id: number, datos: { codigo: string; precioPorHora: number; estado: string }) => Promise<boolean | undefined>;
     onEliminar: (id: number) => void;
+    onReactivar: (id: number) => void;
 }
 
-export default function VistaCanchasPropietario({ canchas, loading, onCrear, onEditar, onEliminar }: Props) {
+export default function VistaCanchasPropietario({ canchas, loading, onCrear, onEditar, onEliminar, onReactivar }: Props) {
     // Estado del modal
     const [modalVisible, setModalVisible] = useState(false);
     const [canchaSeleccionada, setCanchaSeleccionada] = useState<any>(null);
@@ -118,6 +119,7 @@ export default function VistaCanchasPropietario({ canchas, loading, onCrear, onE
                             cancha={cancha}
                             onEditar={abrirEditar}
                             onEliminar={onEliminar}
+                            onReactivar={onReactivar}
                         />
                     ))}
 

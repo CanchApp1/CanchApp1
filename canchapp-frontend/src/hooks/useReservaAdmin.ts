@@ -4,6 +4,7 @@ import {
     obtenerReservasPorEstablecimiento,
     cancelarReserva as cancelarReservaService,
     crearReservaAdmin as crearReservaAdminService,
+    editarReservaService,
 } from '../services/reservaService';
 import { obtenerPagosPorEstablecimiento } from '../services/pagoService';
 
@@ -64,8 +65,7 @@ export function useReservasAdmin(establecimientoId: number | null) {
 
     const editarReserva = async (id: number, data: Parameters<typeof crearReservaAdminService>[0]) => {
         try {
-            await cancelarReservaService(id);
-            await crearReservaAdminService(data);
+            await editarReservaService(id, data);
             await cargarTodo();
             toast('Reserva modificada exitosamente.', 'success');
         } catch (err) {

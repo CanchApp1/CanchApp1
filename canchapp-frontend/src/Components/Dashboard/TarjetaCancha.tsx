@@ -1,4 +1,4 @@
-import { Pencil, Trash2, DollarSign } from 'lucide-react';
+import { Pencil, Trash2, DollarSign, RefreshCw } from 'lucide-react';
 
 // ============================================
 // TARJETA DE CANCHA — Componente visual individual
@@ -9,9 +9,10 @@ interface Props {
     cancha: any;
     onEditar: (cancha: any) => void;
     onEliminar: (id: number) => void;
+    onReactivar: (id: number) => void;
 }
 
-export default function TarjetaCancha({ cancha, onEditar, onEliminar }: Props) {
+export default function TarjetaCancha({ cancha, onEditar, onEliminar, onReactivar }: Props) {
     const esActiva = cancha.estado === 'ACTIVA' || cancha.estado === '1' || cancha.estado === true || cancha.estado === 1;
     return (
         <div className={`group bg-white p-6 rounded-3xl shadow-sm border border-gray-100 transition-all ${
@@ -61,13 +62,23 @@ export default function TarjetaCancha({ cancha, onEditar, onEliminar }: Props) {
                     <Pencil size={15} />
                     Editar
                 </button>
-                <button
-                    onClick={() => onEliminar(cancha.canchaId)}
-                    className="flex-1 flex items-center justify-center gap-2 bg-red-50 py-3 rounded-2xl text-sm font-bold text-red-500 hover:bg-red-100 active:scale-[0.97] transition-all"
-                >
-                    <Trash2 size={15} />
-                    Eliminar
-                </button>
+                {esActiva ? (
+                    <button
+                        onClick={() => onEliminar(cancha.canchaId)}
+                        className="flex-1 flex items-center justify-center gap-2 bg-red-50 py-3 rounded-2xl text-sm font-bold text-red-500 hover:bg-red-100 active:scale-[0.97] transition-all"
+                    >
+                        <Trash2 size={15} />
+                        Eliminar
+                    </button>
+                ) : (
+                    <button
+                        onClick={() => onReactivar(cancha.canchaId)}
+                        className="flex-1 flex items-center justify-center gap-2 bg-green-50 py-3 rounded-2xl text-sm font-bold text-green-600 hover:bg-green-100 active:scale-[0.97] transition-all"
+                    >
+                        <RefreshCw size={15} />
+                        Reactivar
+                    </button>
+                )}
             </div>
         </div>
     );

@@ -43,7 +43,7 @@ export default function DashboardPropietario() {
     }, [userId]);
 
     // ─── Hooks de negocio ────────────────────────
-    const { canchas, loading: loadingCanchas, addCancha, updateCancha, deleteCancha } = useInventory(realEstId);
+    const { canchas, loading: loadingCanchas, addCancha, updateCancha, deleteCancha, reactivarCancha } = useInventory(realEstId);
     const { horarios, loading: loadingHorarios, diasSinHorario, addHorario, updateHorario, deleteHorario } = useHorarios(realEstId);
     const { establecimiento, loading: loadingConfig, refresh: refreshEstablecimiento } = useEstablecimiento(userId);
     const { reservas, pagos, loading: loadingResGlobal, error: errorReservas, refrescar, cancelarReserva, crearReserva, editarReserva } = useReservasAdmin(realEstId);
@@ -103,6 +103,7 @@ export default function DashboardPropietario() {
                             onCrear={(datos) => addCancha(datos)}
                             onEditar={(id, datos) => updateCancha(id, datos)}
                             onEliminar={deleteCancha}
+                            onReactivar={reactivarCancha}
                         />
                     )}
 

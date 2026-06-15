@@ -3,7 +3,8 @@ import {
     obtenerCanchasPorEstablecimiento,
     crearCancha,
     actualizarCancha,
-    eliminarCancha
+    eliminarCancha,
+    reactivarCancha as reactivarCanchaService,
 } from '../services/canchaService';
 import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../context/ConfirmContext';
@@ -98,18 +99,32 @@ export const useInventory = (establecimientoId: number | null) => {
         }
     };
 
-    // ─── 5. EFECTO AUTOMÁTICO ────────────────────────
+    // ─── 5. REACTIVAR ───────────────────────────────
+    const reactivarCancha = async (canchaId: number) => {
+        try {
+            await reactivarCanchaService(canchaId);
+            await fetchCanchas();
+            toast('Cancha reactivada correctamente.', 'success');
+            return true;
+        } catch {
+            toast('Error al reactivar la cancha. Intenta de nuevo.', 'error');
+            return false;
+        }
+    };
+
+    // ─── 6. EFECTO AUTOMÁTICO ────────────────────────
     useEffect(() => {
         fetchCanchas();
     }, [establecimientoId]);
 
-    // ─── 6. RETORNO PÚBLICO ─────────────────────────
+    // ─── 7. RETORNO PÚBLICO ─────────────────────────
     return {
         canchas,
         loading,
         addCancha,
         updateCancha,
         deleteCancha,
+        reactivarCancha,
         refresh: fetchCanchas,
     };
 };

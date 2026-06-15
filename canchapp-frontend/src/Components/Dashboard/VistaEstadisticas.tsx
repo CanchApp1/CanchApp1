@@ -4,7 +4,10 @@ import {
     ResponsiveContainer, LineChart, Line, Cell,
 } from 'recharts';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
-import { obtenerIngresosMes, obtenerIngresosMesAnterior } from '../../services/metricasService';
+import {
+    obtenerIngresosMes, obtenerIngresosMesAnterior,
+    obtenerClientesFrecuentes, obtenerSlotsOcupacion,
+} from '../../services/metricasService';
 import { fechaLocal } from '../../utils/fecha';
 
 interface Props {
@@ -12,13 +15,22 @@ interface Props {
     loading: boolean;
 }
 
-const DIAS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+const DIAS_ORDER = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+const DIA_SEMANA_MAP: Record<string, string> = {
+    MONDAY: 'Lun', TUESDAY: 'Mar', WEDNESDAY: 'Mié',
+    THURSDAY: 'Jue', FRIDAY: 'Vie', SATURDAY: 'Sáb', SUNDAY: 'Dom',
+};
 const COLORES_TOP = ['#0ed1e8', '#03292e', '#10b981', '#f59e0b', '#8b5cf6'];
 
 export default function VistaEstadisticas({ reservas, loading }: Props) {
     const [ingresosMes, setIngresosMes] = useState(0);
     const [ingresosMesAnterior, setIngresosMesAnterior] = useState(0);
     const [loadingIngresos, setLoadingIngresos] = useState(true);
+    const [topClientes, setTopClientes] = useState<{ nombre: string; reservas: number }[]>([]);
+    const [ocupacionPorDia, setOcupacionPorDia] = useState<{ dia: string; reservas: number }[]>(
+        DIAS_ORDER.map(d => ({ dia: d, reservas: 0 }))
+    );
+    const [horariosPico, setHorariosPico] = useState<{ hora: string; reservas: number; horaNum: number }[]>([]);
 
     useEffect(() => {
         Promise.all([obtenerIngresosMes(), obtenerIngresosMesAnterior()])
@@ -29,12 +41,34 @@ export default function VistaEstadisticas({ reservas, loading }: Props) {
             .finally(() => setLoadingIngresos(false));
     }, []);
 
+    useEffect(() => {
+        obtenerClientesFrecuentes().then(data => {
+            setTopClientes(data.slice(0, 5).map(c => ({ nombre: c.nombreCliente, reservas: c.totalReservas })));
+        });
+        obtenerSlotsOcupacion().then(slots => {
+            const diaConteo: Record<string, number> = {};
+            const horaConteo: Record<string, number> = {};
+            for (const s of slots) {
+                const dia = DIA_SEMANA_MAP[s.diaSemana] ?? s.diaSemana;
+                diaConteo[dia] = (diaConteo[dia] ?? 0) + s.totalReservasEnSlot;
+                const hora = typeof s.horaSlot === 'string' ? s.horaSlot : '00:00';
+                horaConteo[hora] = (horaConteo[hora] ?? 0) + s.totalReservasEnSlot;
+            }
+            setOcupacionPorDia(DIAS_ORDER.map(d => ({ dia: d, reservas: diaConteo[d] ?? 0 })));
+            setHorariosPico(
+                Object.entries(horaConteo)
+                    .map(([hora, count]) => ({ hora, reservas: count, horaNum: parseInt(hora.split(':')[0]) }))
+                    .sort((a, b) => a.horaNum - b.horaNum)
+            );
+        });
+    }, []);
+
     const reservasActivas = useMemo(
         () => reservas.filter(r => r.estadoReserva !== 'CANCELADA'),
         [reservas]
     );
 
-    // Tendencias: últimas 8 semanas
+    // Tendencias: últimas 8 semanas (sin endpoint dedicado, se calcula del prop)
     const tendenciasSemanas = useMemo(() => {
         const hoy = new Date();
         return Array.from({ length: 8 }, (_, i) => {
@@ -47,42 +81,6 @@ export default function VistaEstadisticas({ reservas, loading }: Props) {
             const count = reservasActivas.filter(r => r.fecha >= lunesStr && r.fecha <= domingoStr).length;
             return { semana: `${lunes.getDate()}/${lunes.getMonth() + 1}`, reservas: count };
         });
-    }, [reservasActivas]);
-
-    // Ocupación por día de semana
-    const ocupacionPorDia = useMemo(() => {
-        const conteo: Record<number, number> = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
-        for (const r of reservasActivas) {
-            if (!r.fecha) continue;
-            const dia = new Date(r.fecha + 'T12:00:00').getDay();
-            conteo[dia]++;
-        }
-        return DIAS.map((nombre, i) => ({ dia: nombre, reservas: conteo[i] }));
-    }, [reservasActivas]);
-
-    // Horarios pico y valle
-    const horariosPico = useMemo(() => {
-        const conteo: Record<number, number> = {};
-        for (const r of reservasActivas) {
-            if (!r.horaInicio) continue;
-            const hora = parseInt(r.horaInicio.split(':')[0]);
-            conteo[hora] = (conteo[hora] ?? 0) + 1;
-        }
-        return Object.entries(conteo)
-            .map(([h, count]) => ({ hora: `${h}:00`, reservas: count, horaNum: parseInt(h) }))
-            .sort((a, b) => a.horaNum - b.horaNum);
-    }, [reservasActivas]);
-
-    // Top 5 clientes
-    const topClientes = useMemo(() => {
-        const mapa: Record<number, { nombre: string; reservas: number }> = {};
-        for (const r of reservasActivas) {
-            const uid = r.usuario?.idUsuario ?? r.usuario?.usuarioId;
-            if (!uid) continue;
-            if (!mapa[uid]) mapa[uid] = { nombre: r.usuario?.nombre ?? 'Sin nombre', reservas: 0 };
-            mapa[uid].reservas++;
-        }
-        return Object.values(mapa).sort((a, b) => b.reservas - a.reservas).slice(0, 5);
     }, [reservasActivas]);
 
     // Comparación de ingresos
@@ -101,13 +99,14 @@ export default function VistaEstadisticas({ reservas, loading }: Props) {
         : ingresosMes > 0 ? 100 : 0;
 
     const fmt = (v: number) => '$' + new Intl.NumberFormat('de-DE').format(Math.round(v));
-    const maxHorario = Math.max(...horariosPico.map(h => h.reservas), 0);
 
     if (loading) return (
         <div className="flex justify-center py-20">
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#0ed1e8]" />
         </div>
     );
+
+    const maxHorario = Math.max(...horariosPico.map(h => h.reservas), 0);
 
     return (
         <div className="space-y-8">

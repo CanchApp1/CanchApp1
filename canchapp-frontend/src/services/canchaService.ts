@@ -59,3 +59,14 @@ export const eliminarCancha = async (canchaId: number) => {
         throw error;
     }
 };
+
+// 5. REACTIVAR una cancha deshabilitada
+export const reactivarCancha = async (canchaId: number) => {
+    try {
+        const response = await api.put(`/cancha/${canchaId}/activar`);
+        return response.data;
+    } catch (error) {
+        console.error('Error reactivando cancha:', error);
+        throw error;
+    }
+};
