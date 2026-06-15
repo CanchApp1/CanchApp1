@@ -43,11 +43,10 @@ export const obtenerIngresosSemana = async (): Promise<number> => {
 
 export const obtenerIngresosMesAnterior = async (): Promise<number> => {
     const now = new Date();
-    const prevMonth = now.getMonth() === 0 ? 12 : now.getMonth();
-    const year = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
-    const lastDay = new Date(year, prevMonth, 0).getDate();
-    const fechaInicio = `${year}-${String(prevMonth).padStart(2, '0')}-01`;
-    const fechaFin = `${year}-${String(prevMonth).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+    const primerDiaMesAnterior = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const ultimoDiaMesAnterior = new Date(now.getFullYear(), now.getMonth(), 0);
+    const fechaInicio = fechaLocal(primerDiaMesAnterior);
+    const fechaFin = fechaLocal(ultimoDiaMesAnterior);
     try {
         const response = await api.get('/metricas/ingresos', { params: { fechaInicio, fechaFin } });
         return Number(response.data?.totalIngresos ?? 0);

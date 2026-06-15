@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Building2, MapPin, Phone, ImagePlus, Trash2 } from 'lucide-react';
 import { actualizarEstablecimiento, subirImagenEstablecimiento } from '../../services/establecimientoService';
+import { useToast } from '../../context/ToastContext';
 
 interface Props {
     visible: boolean;
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export default function ModalEditarEstablecimiento({ visible, establecimiento, onCerrar, onExito }: Props) {
+    const { toast } = useToast();
     const [form, setForm] = useState({ nombreEstablecimiento: '', direccion: '', numeroTelefono: '' });
     const [imagenActual, setImagenActual] = useState<string | null>(null);
     const [archivoNuevo, setArchivoNuevo] = useState<File | null>(null);
@@ -51,7 +53,21 @@ export default function ModalEditarEstablecimiento({ visible, establecimiento, o
         const file = e.target.files?.[0];
         if (!file) return;
 
+        const TIPOS_PERMITIDOS = ['image/jpeg', 'image/png', 'image/webp'];
+        const MAX_SIZE_MB = 5;
+        if (!TIPOS_PERMITIDOS.includes(file.type)) {
+            setError('Solo se permiten imágenes JPG, PNG o WebP.');
+            if (inputRef.current) inputRef.current.value = '';
+            return;
+        }
+        if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+            setError(`La imagen no puede superar ${MAX_SIZE_MB}MB.`);
+            if (inputRef.current) inputRef.current.value = '';
+            return;
+        }
+
         limpiarPreview();
+        setError('');
         setArchivoNuevo(file);
         setEliminarFoto(false);
         setPreviewNuevo(URL.createObjectURL(file));
@@ -98,11 +114,10 @@ export default function ModalEditarEstablecimiento({ visible, establecimiento, o
             await actualizarEstablecimiento(idValido, payload);
             
             limpiarPreview();
-            
+            toast('Establecimiento actualizado correctamente.', 'success');
             if (typeof onExito === 'function') {
-                onExito(); // Dispara la recarga limpia del Hook del padre
+                onExito();
             }
-
             onCerrar();
         } catch (err: any) {
             const mensajeError = err?.response?.data?.message || err?.response?.data?.error || err.message || 'Error al guardar los cambios.';

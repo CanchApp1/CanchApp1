@@ -6,6 +6,7 @@ import {
     eliminarHorario,
 } from '../services/horarioService';
 import { useConfirm } from '../context/ConfirmContext';
+import { useToast } from '../context/ToastContext';
 
 // ============================================
 // HOOK DE HORARIOS — Lógica CRUD de Horarios
@@ -30,6 +31,7 @@ export const useHorarios = (establecimientoId: number | null) => {
     const [horarios, setHorarios] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const { confirm } = useConfirm();
+    const { toast } = useToast();
 
     const emailUsuario = sessionStorage.getItem('userEmail') || 'sistema';
 
@@ -40,15 +42,12 @@ export const useHorarios = (establecimientoId: number | null) => {
         setLoading(true);
         try {
             const data = await obtenerHorariosPorEstablecimiento(establecimientoId);
-
-            // Ordenamos por día de la semana para la vista
             const ordenados = data.sort((a: any, b: any) =>
                 ORDEN_DIAS.indexOf(a.diaSemana) - ORDEN_DIAS.indexOf(b.diaSemana)
             );
-
             setHorarios(ordenados);
-        } catch (error) {
-            console.error('Error en useHorarios (fetch):', error);
+        } catch {
+            toast('Error al cargar los horarios.', 'error');
         } finally {
             setLoading(false);
         }
@@ -65,9 +64,10 @@ export const useHorarios = (establecimientoId: number | null) => {
                 usuarioCreacion: emailUsuario,
             });
             await fetchHorarios();
+            toast('Horario creado correctamente.', 'success');
             return true;
-        } catch (error) {
-            console.error('Error en useHorarios (crear):', error);
+        } catch {
+            toast('Error al crear el horario. Intenta de nuevo.', 'error');
             return false;
         }
     };
@@ -83,9 +83,10 @@ export const useHorarios = (establecimientoId: number | null) => {
                 usuarioModificacion: emailUsuario,
             });
             await fetchHorarios();
+            toast('Horario actualizado correctamente.', 'success');
             return true;
-        } catch (error) {
-            console.error('Error en useHorarios (actualizar):', error);
+        } catch {
+            toast('Error al actualizar el horario. Intenta de nuevo.', 'error');
             return false;
         }
     };
@@ -97,9 +98,10 @@ export const useHorarios = (establecimientoId: number | null) => {
         try {
             await eliminarHorario(id);
             await fetchHorarios();
+            toast('Horario eliminado.', 'success');
             return true;
-        } catch (error) {
-            console.error('Error en useHorarios (eliminar):', error);
+        } catch {
+            toast('Error al eliminar el horario. Intenta de nuevo.', 'error');
             return false;
         }
     };
