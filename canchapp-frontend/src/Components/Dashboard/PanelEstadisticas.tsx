@@ -5,6 +5,7 @@ import {
     obtenerIngresosDia,
     obtenerIngresosSemana,
 } from '../../services/metricasService';
+import { SkeletonCard } from './SkeletonCard';
 
 interface Props {
     reservas: any[];
@@ -16,14 +17,17 @@ export default function PanelEstadisticas({ reservas, canchas }: Props) {
     const [ingresosDia, setIngresosDia] = useState(0);
     const [ingresosSemana, setIngresosSemana] = useState(0);
     const [ingresosMes, setIngresosMes] = useState(0);
+    const [loadingIngresos, setLoadingIngresos] = useState(true);
 
     useEffect(() => {
+        setLoadingIngresos(true);
         Promise.all([obtenerIngresosDia(), obtenerIngresosSemana(), obtenerIngresosMes()])
             .then(([dia, semana, mes]) => {
                 setIngresosDia(dia);
                 setIngresosSemana(semana);
                 setIngresosMes(mes);
-            });
+            })
+            .finally(() => setLoadingIngresos(false));
     }, []);
 
     const reservasHoy = useMemo(() =>
@@ -73,6 +77,14 @@ export default function PanelEstadisticas({ reservas, canchas }: Props) {
             accent: 'border-l-green-500',
         },
     ];
+
+    if (loadingIngresos) return (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+                <SkeletonCard key={i} className="h-24" />
+            ))}
+        </div>
+    );
 
     return (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">

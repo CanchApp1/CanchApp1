@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Search, User, Calendar, Clock, ChevronLeft, Phone, Mail } from 'lucide-react';
 import { getEstadoDisplay } from '../../utils/reservaUtils';
+import { SkeletonJugadorItem } from './SkeletonCard';
 
 interface Props {
     reservas: any[];
@@ -34,8 +35,8 @@ export default function VistaJugadores({ reservas, loading }: Props) {
     );
 
     if (loading) return (
-        <div className="flex justify-center py-20">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#0ed1e8]" />
+        <div className="flex flex-col gap-3 mt-4">
+            {Array.from({ length: 6 }).map((_, i) => <SkeletonJugadorItem key={i} />)}
         </div>
     );
 

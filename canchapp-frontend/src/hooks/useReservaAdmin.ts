@@ -12,6 +12,7 @@ export function useReservasAdmin(establecimientoId: number | null) {
     const [reservas, setReservas] = useState<any[]>([]);
     const [pagos, setPagos] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(false);
 
     useEffect(() => {
         if (establecimientoId) cargarTodo();
@@ -20,6 +21,7 @@ export function useReservasAdmin(establecimientoId: number | null) {
 
     const cargarTodo = async () => {
         setLoading(true);
+        setError(false);
         try {
             const [dataReservas, dataPagos] = await Promise.all([
                 obtenerReservasPorEstablecimiento(establecimientoId!),
@@ -28,6 +30,7 @@ export function useReservasAdmin(establecimientoId: number | null) {
             setReservas(dataReservas);
             setPagos(dataPagos);
         } catch {
+            setError(true);
             toast('No se pudieron cargar las reservas.', 'error');
         } finally {
             setLoading(false);
@@ -71,5 +74,5 @@ export function useReservasAdmin(establecimientoId: number | null) {
         }
     };
 
-    return { reservas, pagos, loading, refrescar: cargarTodo, getPagoDeReserva, cancelarReserva, crearReserva, editarReserva };
+    return { reservas, pagos, loading, error, refrescar: cargarTodo, getPagoDeReserva, cancelarReserva, crearReserva, editarReserva };
 }
