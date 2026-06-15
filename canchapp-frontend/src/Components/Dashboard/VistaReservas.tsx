@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Search, Filter, Calendar, Clock, Plus, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { SkeletonReservaItem } from './SkeletonCard';
 import ModalCrearReservaAdmin from './ModalCrearReservaAdmin';
 import ModalEditarReservaAdmin from './ModalEditarReservaAdmin';
 import ModalDetalleReserva from './ModalDetalleReserva';
@@ -184,8 +185,8 @@ export default function VistaReservasEstablecimiento({ reservas, pagos, loading,
 
             {/* Lista */}
             {loading ? (
-                <div className="flex justify-center py-20">
-                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#0ed1e8]"></div>
+                <div className="flex flex-col gap-4">
+                    {Array.from({ length: 5 }).map((_, i) => <SkeletonReservaItem key={i} />)}
                 </div>
             ) : (
                 <div className="grid grid-cols-1 gap-4">

@@ -3,7 +3,8 @@ import {
     obtenerCanchasPorEstablecimiento,
     crearCancha,
     actualizarCancha,
-    eliminarCancha
+    eliminarCancha,
+    reactivarCancha as reactivarCanchaService,
 } from '../services/canchaService';
 import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../context/ConfirmContext';
@@ -28,11 +29,9 @@ export const useInventory = (establecimientoId: number | null) => {
         setLoading(true);
         try {
             const data = await obtenerCanchasPorEstablecimiento(establecimientoId);
-
-            console.log("Datos brutos del backend:", data); // Mira esto en la consola
             setCanchas(data);
-        } catch (error) {
-            console.error('Error en useInventory (fetch):', error);
+        } catch {
+            toast('Error al cargar las canchas.', 'error');
         } finally {
             setLoading(false);
         }
@@ -50,12 +49,10 @@ export const useInventory = (establecimientoId: number | null) => {
                 establecimiento: { establecimientoId },
                 usuarioCreacion: emailUsuario,
             });
-
-            // Refrescamos la lista para que aparezca la nueva cancha
             await fetchCanchas();
+            toast('Cancha creada exitosamente.', 'success');
             return true;
-        } catch (error) {
-            console.error('Error en useInventory (crear):', error);
+        } catch {
             toast('Error al crear la cancha. Es posible que el código ya exista.', 'error');
             return false;
         }
@@ -73,11 +70,11 @@ export const useInventory = (establecimientoId: number | null) => {
                 establecimiento: { establecimientoId },
                 usuarioModificacion: emailUsuario,
             });
-
             await fetchCanchas();
+            toast('Cancha actualizada correctamente.', 'success');
             return true;
-        } catch (error) {
-            console.error('Error en useInventory (actualizar):', error);
+        } catch {
+            toast('Error al actualizar la cancha. Intenta de nuevo.', 'error');
             return false;
         }
     };
@@ -94,25 +91,40 @@ export const useInventory = (establecimientoId: number | null) => {
         try {
             await eliminarCancha(id);
             await fetchCanchas();
+            toast('Cancha eliminada.', 'success');
             return true;
-        } catch (error) {
-            console.error('Error en useInventory (eliminar):', error);
+        } catch {
+            toast('Error al eliminar la cancha. Intenta de nuevo.', 'error');
             return false;
         }
     };
 
-    // ─── 5. EFECTO AUTOMÁTICO ────────────────────────
+    // ─── 5. REACTIVAR ───────────────────────────────
+    const reactivarCancha = async (canchaId: number) => {
+        try {
+            await reactivarCanchaService(canchaId);
+            await fetchCanchas();
+            toast('Cancha reactivada correctamente.', 'success');
+            return true;
+        } catch {
+            toast('Error al reactivar la cancha. Intenta de nuevo.', 'error');
+            return false;
+        }
+    };
+
+    // ─── 6. EFECTO AUTOMÁTICO ────────────────────────
     useEffect(() => {
         fetchCanchas();
     }, [establecimientoId]);
 
-    // ─── 6. RETORNO PÚBLICO ─────────────────────────
+    // ─── 7. RETORNO PÚBLICO ─────────────────────────
     return {
         canchas,
         loading,
         addCancha,
         updateCancha,
         deleteCancha,
+        reactivarCancha,
         refresh: fetchCanchas,
     };
 };

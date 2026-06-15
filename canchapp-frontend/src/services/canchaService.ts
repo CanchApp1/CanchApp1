@@ -10,7 +10,6 @@ export const obtenerCanchasPorEstablecimiento = async (establecimientoId: number
         const response = await api.get(`/cancha/establecimiento/${establecimientoId}`);
         return response.data.objectResponse || [];
     } catch (error) {
-        console.error(`Error obteniendo canchas (${establecimientoId}):`, error);
         throw error;
     }
 };
@@ -27,7 +26,6 @@ export const crearCancha = async (datos: {
         const response = await api.post('/cancha', datos);
         return response.data;
     } catch (error) {
-        console.error('Error creando cancha:', error);
         throw error;
     }
 };
@@ -44,7 +42,6 @@ export const actualizarCancha = async (canchaId: number, datos: {
         const response = await api.put(`/cancha/${canchaId}`, datos);
         return response.data;
     } catch (error) {
-        console.error('Error actualizando cancha:', error);
         throw error;
     }
 };
@@ -55,7 +52,16 @@ export const eliminarCancha = async (canchaId: number) => {
         const response = await api.delete(`/cancha/${canchaId}`);
         return response.data;
     } catch (error) {
-        console.error('Error eliminando cancha:', error);
+        throw error;
+    }
+};
+
+// 5. REACTIVAR una cancha deshabilitada
+export const reactivarCancha = async (canchaId: number) => {
+    try {
+        const response = await api.put(`/cancha/${canchaId}/activar`);
+        return response.data;
+    } catch (error) {
         throw error;
     }
 };

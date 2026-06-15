@@ -4,6 +4,7 @@ import {
     obtenerReservasPorEstablecimiento,
     cancelarReserva as cancelarReservaService,
     crearReservaAdmin as crearReservaAdminService,
+    editarReservaService,
 } from '../services/reservaService';
 import { obtenerPagosPorEstablecimiento } from '../services/pagoService';
 
@@ -12,6 +13,7 @@ export function useReservasAdmin(establecimientoId: number | null) {
     const [reservas, setReservas] = useState<any[]>([]);
     const [pagos, setPagos] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(false);
 
     useEffect(() => {
         if (establecimientoId) cargarTodo();
@@ -20,6 +22,7 @@ export function useReservasAdmin(establecimientoId: number | null) {
 
     const cargarTodo = async () => {
         setLoading(true);
+        setError(false);
         try {
             const [dataReservas, dataPagos] = await Promise.all([
                 obtenerReservasPorEstablecimiento(establecimientoId!),
@@ -28,6 +31,7 @@ export function useReservasAdmin(establecimientoId: number | null) {
             setReservas(dataReservas);
             setPagos(dataPagos);
         } catch {
+            setError(true);
             toast('No se pudieron cargar las reservas.', 'error');
         } finally {
             setLoading(false);
@@ -61,8 +65,7 @@ export function useReservasAdmin(establecimientoId: number | null) {
 
     const editarReserva = async (id: number, data: Parameters<typeof crearReservaAdminService>[0]) => {
         try {
-            await cancelarReservaService(id);
-            await crearReservaAdminService(data);
+            await editarReservaService(id, data);
             await cargarTodo();
             toast('Reserva modificada exitosamente.', 'success');
         } catch (err) {
@@ -71,5 +74,5 @@ export function useReservasAdmin(establecimientoId: number | null) {
         }
     };
 
-    return { reservas, pagos, loading, refrescar: cargarTodo, getPagoDeReserva, cancelarReserva, crearReserva, editarReserva };
+    return { reservas, pagos, loading, error, refrescar: cargarTodo, getPagoDeReserva, cancelarReserva, crearReserva, editarReserva };
 }

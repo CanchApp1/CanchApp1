@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Plus, Search, X } from 'lucide-react'; // 🚀 Importado el icono X
+import { Plus, Search, X } from 'lucide-react';
 import TarjetaCancha from './TarjetaCancha';
 import ModalCancha from './ModalCancha';
+import { SkeletonCanchaItem } from './SkeletonCard';
 
 // ============================================
 // VISTA CANCHAS PROPIETARIO
@@ -14,9 +15,10 @@ interface Props {
     onCrear: (datos: { codigo: string; precioPorHora: number; estado: string }) => Promise<boolean | undefined>;
     onEditar: (id: number, datos: { codigo: string; precioPorHora: number; estado: string }) => Promise<boolean | undefined>;
     onEliminar: (id: number) => void;
+    onReactivar: (id: number) => void;
 }
 
-export default function VistaCanchasPropietario({ canchas, loading, onCrear, onEditar, onEliminar }: Props) {
+export default function VistaCanchasPropietario({ canchas, loading, onCrear, onEditar, onEliminar, onReactivar }: Props) {
     // Estado del modal
     const [modalVisible, setModalVisible] = useState(false);
     const [canchaSeleccionada, setCanchaSeleccionada] = useState<any>(null);
@@ -106,9 +108,8 @@ export default function VistaCanchasPropietario({ canchas, loading, onCrear, onE
 
             {/* Contenido */}
             {loading ? (
-                <div className="flex flex-col items-center py-20">
-                    <div className="w-14 h-14 border-4 border-[#0ed1e8]/30 border-t-[#0ed1e8] rounded-full animate-spin mb-4" />
-                    <p className="text-gray-400 font-medium">Cargando inventario...</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {Array.from({ length: 4 }).map((_, i) => <SkeletonCanchaItem key={i} />)}
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -118,6 +119,7 @@ export default function VistaCanchasPropietario({ canchas, loading, onCrear, onE
                             cancha={cancha}
                             onEditar={abrirEditar}
                             onEliminar={onEliminar}
+                            onReactivar={onReactivar}
                         />
                     ))}
 

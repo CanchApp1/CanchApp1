@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { MessageSquare, Calendar, Clock, UserCircle2 } from 'lucide-react';
 import { listarComentariosPorEstablecimiento } from '../../services/comentarioService';
 import { useToast } from '../../context/ToastContext';
+import { SkeletonComentarioItem } from './SkeletonCard';
 
 interface Props {
     establecimientoId: number | null;
@@ -48,8 +49,8 @@ export default function VistaComentariosPropietario({ establecimientoId }: Props
             </div>
 
             {cargando ? (
-                <div className="flex justify-center py-20">
-                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#0ed1e8]" />
+                <div className="grid gap-4">
+                    {Array.from({ length: 4 }).map((_, i) => <SkeletonComentarioItem key={i} />)}
                 </div>
             ) : comentarios.length === 0 ? (
                 <div className="text-center py-20 bg-gray-50 rounded-[2rem] border-2 border-dashed border-gray-200">

@@ -18,6 +18,7 @@ import VistaJugadores from '../Components/Dashboard/VistaJugadores';
 import VistaCalendario from '../Components/Dashboard/VistaCalendario';
 import VistaEstadisticas from '../Components/Dashboard/VistaEstadisticas';
 import VistaComentariosPropietario from '../Components/Dashboard/VistaComentariosPropietario';
+import VistaPagos from '../Components/Dashboard/VistaPagos';
 
 // ============================================
 // DASHBOARD PROPIETARIO — Página principal
@@ -42,16 +43,30 @@ export default function DashboardPropietario() {
     }, [userId]);
 
     // ─── Hooks de negocio ────────────────────────
-    const { canchas, loading: loadingCanchas, addCancha, updateCancha, deleteCancha } = useInventory(realEstId);
+    const { canchas, loading: loadingCanchas, addCancha, updateCancha, deleteCancha, reactivarCancha } = useInventory(realEstId);
     const { horarios, loading: loadingHorarios, diasSinHorario, addHorario, updateHorario, deleteHorario } = useHorarios(realEstId);
     const { establecimiento, loading: loadingConfig, refresh: refreshEstablecimiento } = useEstablecimiento(userId);
-    const { reservas, pagos, loading: loadingResGlobal, cancelarReserva, crearReserva, editarReserva } = useReservasAdmin(realEstId);
+    const { reservas, pagos, loading: loadingResGlobal, error: errorReservas, refrescar, cancelarReserva, crearReserva, editarReserva } = useReservasAdmin(realEstId);
+
+    const ErrorReservas = () => (
+        <div className="flex flex-col items-center justify-center py-24 text-center">
+            <p className="text-4xl mb-4">⚠️</p>
+            <p className="text-gray-600 font-bold text-lg">No se pudieron cargar los datos</p>
+            <p className="text-gray-400 text-sm mt-1 mb-6">Revisa tu conexión e intenta de nuevo.</p>
+            <button
+                onClick={refrescar}
+                className="px-6 py-3 bg-[#03292e] text-white font-bold rounded-2xl hover:bg-[#0ed1e8] hover:text-[#03292e] transition-all"
+            >
+                Reintentar
+            </button>
+        </div>
+    );
 
     return (
         <div className="flex min-h-screen bg-gray-50">
             <SidebarAdmin seccionActiva={seccionActiva} onCambiarSeccion={setSeccionActiva} />
 
-            <main className="flex-1 p-8 md:p-12 overflow-y-auto">
+            <main className="flex-1 p-8 md:p-12 overflow-y-auto pt-16 md:pt-12">
                 <div className="max-w-5xl mx-auto">
 
                     {/* ─── SECCIÓN INICIO ────────────────── */}
@@ -88,10 +103,12 @@ export default function DashboardPropietario() {
                             onCrear={(datos) => addCancha(datos)}
                             onEditar={(id, datos) => updateCancha(id, datos)}
                             onEliminar={deleteCancha}
+                            onReactivar={reactivarCancha}
                         />
                     )}
 
                     {seccionActiva === 'reservas' && (
+                        errorReservas ? <ErrorReservas /> :
                         <VistaReservas
                             reservas={reservas}
                             pagos={pagos}
@@ -106,6 +123,7 @@ export default function DashboardPropietario() {
                     )}
 
                     {seccionActiva === 'calendario' && (
+                        errorReservas ? <ErrorReservas /> :
                         <VistaCalendario
                             reservas={reservas}
                             pagos={pagos}
@@ -116,6 +134,7 @@ export default function DashboardPropietario() {
                     )}
 
                     {seccionActiva === 'jugadores' && (
+                        errorReservas ? <ErrorReservas /> :
                         <VistaJugadores
                             reservas={reservas}
                             loading={loadingResGlobal}
@@ -131,6 +150,16 @@ export default function DashboardPropietario() {
                             onCrear={addHorario}
                             onEditar={updateHorario}
                             onEliminar={deleteHorario}
+                        />
+                    )}
+
+                    {/* ─── SECCIÓN PAGOS ─────────────────── */}
+                    {seccionActiva === 'pagos' && (
+                        errorReservas ? <ErrorReservas /> :
+                        <VistaPagos
+                            reservas={reservas}
+                            pagos={pagos}
+                            loading={loadingResGlobal}
                         />
                     )}
 

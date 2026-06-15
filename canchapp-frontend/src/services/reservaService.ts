@@ -134,6 +134,23 @@ export const crearReservaAdmin = async (data: {
     }
 };
 
+export const editarReservaService = async (id: number, data: {
+    canchaId: number;
+    fecha: string;
+    horaInicio: string;
+    horaFin: string;
+    descripcion: string;
+}) => {
+    const response = await api.put(`/reserva/${id}`, {
+        cancha: { canchaId: data.canchaId },
+        fecha: data.fecha,
+        horaInicio: data.horaInicio,
+        horaFin: data.horaFin,
+        descripcion: data.descripcion,
+    });
+    return response.data;
+};
+
 export const obtenerHistorialUsuario = async (idUsuario: number) => {
   try {
     const response = await api.get(`/reserva/historial/usuario/${idUsuario}`);
