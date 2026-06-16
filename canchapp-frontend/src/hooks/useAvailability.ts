@@ -27,8 +27,7 @@ export const useAvailability = (establecimientoId: number | undefined, canchaIds
                 );
                 const union = [...new Set(results.flat())].sort();
                 setHorasDisponibles(union);
-            } catch (error) {
-                console.error("Error cargando horas:", error);
+            } catch {
                 setHorasDisponibles([]);
             } finally {
                 setBuscando(false);

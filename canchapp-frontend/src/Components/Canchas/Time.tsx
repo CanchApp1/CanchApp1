@@ -44,14 +44,6 @@ export const TimeSlotGrid = ({
             ) : (
                 <div className="grid grid-cols-3 gap-3">
                     {bloques.map((hora) => {
-
-                        // AÑADE ESTO PARA DEBUGEAR:
-                        //console.log("Servidor devolvió:", horasDisponiblesBackend);
-                        //console.log("Estamos buscando:", hora);
-
-                        // Si el servidor devuelve "08:00" y tú buscas "08:00:00", no habrá match.
-                        // Vamos a intentar una comparación más flexible:
-
                         const estaDisponibleBackend = (horasDisponiblesBackend || []).includes(hora);
                         // Lógica de hora pasada — usar fecha local, no UTC
                         const ahora = new Date();
