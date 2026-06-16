@@ -30,12 +30,9 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      console.log('[Login] Iniciando login...');
       const respuesta = await loginUsuario(formData);
-      console.log('[Login] Respuesta del backend:', respuesta);
 
       if (respuesta?.error === 'CUENTA_SUSPENDIDA') {
-        console.log('[Login] Cuenta suspendida detectada, mostrando pantalla...');
         setSuspensionData({
           tipoSuspension: respuesta.tipoSuspension ?? null,
           fechaReactivacion: respuesta.fechaReactivacion ?? null,
@@ -64,10 +61,8 @@ export default function LoginPage() {
           sessionStorage.setItem('userName', dataToken.nombre_completo || 'Usuario');
           sessionStorage.setItem('userId', dataToken.userId?.toString());
           sessionStorage.setItem('userRole', rolFinal);
-
-          console.log("LOGIN EXITOSO. Rol detectado:", rolFinal);
-        } catch (decodError) {
-          console.error("Error decodificando:", decodError);
+        } catch {
+          // token decode failure — rolFinal keeps default 'Jugador'
         }
 
         window.dispatchEvent(new Event("storage"));
@@ -82,8 +77,7 @@ export default function LoginPage() {
           navigate('/');
         }
       }
-    } catch (error: any) {
-      console.error('[Login] Error:', error?.response?.status, error?.response?.data, error);
+    } catch {
       toast("Credenciales incorrectas.", 'error');
     }
   };

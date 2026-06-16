@@ -1,5 +1,5 @@
 // En: src/Components/CanchaCard.tsx
-import { MapPin, Clock, Star } from 'lucide-react';
+import { MapPin, Clock } from 'lucide-react';
 import fondoDefault from '../../assets/fondo_default.png';
 
 interface CanchaCardProps {
@@ -27,10 +27,6 @@ export const CanchaCard = ({ cancha, onClick }: CanchaCardProps) => {
             <div className="p-6 space-y-4 bg-white">
                 <div className="flex justify-between items-center">
                     <h3 className="text-xl font-bold text-[#03292e] truncate">{nombre}</h3>
-                    <div className="flex items-center gap-1 text-[#0ed1e8]">
-                        <Star size={18} fill="#0ed1e8" />
-                        <span className="text-sm font-bold text-gray-600">4.5</span>
-                    </div>
                 </div>
                 <div className="space-y-2 text-gray-500 text-sm">
                     <div className="flex items-center gap-2"><MapPin size={16} className="text-[#0ed1e8]" /> {ubicacion}</div>
