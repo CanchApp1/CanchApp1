@@ -43,16 +43,11 @@ export const publicarDuelo = async (data: {
   horaFin: string;
   descripcion: string;
 }): Promise<DueloDTO> => {
-  const response = await api.post('/duelos/publicar', {
-    ...data,
-    stripePaymentId: 'pm_card_visa',
-  });
+  const response = await api.post('/duelos/publicar', data);
   return response.data.objectResponse ?? response.data;
 };
 
 export const aceptarDuelo = async (id: number): Promise<DueloDTO> => {
-  const response = await api.post(`/duelos/${id}/aceptar`, null, {
-    params: { stripePaymentId: 'pm_card_visa' },
-  });
+  const response = await api.post(`/duelos/${id}/aceptar`);
   return response.data.objectResponse ?? response.data;
 };

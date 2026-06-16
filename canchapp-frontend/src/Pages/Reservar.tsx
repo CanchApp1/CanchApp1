@@ -6,7 +6,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
 import { fechaLocal } from '../utils/fecha';
 import Barra_de_navegacion from '../Components/Barra_navegacion';
-import { MapPin, Star, CheckCircle2, ChevronLeft, CalendarDays, Timer, User ,Users, ArrowRight} from 'lucide-react';
+import { MapPin, CheckCircle2, ChevronLeft, CalendarDays, Timer, User, Users, ArrowRight } from 'lucide-react';
 import estadioFondo from '../assets/estadio_fondo.jpg';
 
 export default function ReservarPage() {
@@ -143,7 +143,6 @@ export default function ReservarPage() {
           <h1 className="text-4xl font-black">{cancha.nombreEstablecimiento || cancha.nombre}</h1>
           <div className="flex gap-6 mt-2 text-sm opacity-90">
             <span className="flex items-center gap-1"><MapPin size={16} /> {cancha.direccion || cancha.ubicacion}</span>
-            <span className="flex items-center gap-1"><Star size={16} fill="#0ed1e8" className="text-[#0ed1e8]" /> 4.5</span>
           </div>
         </div>
       </div>
