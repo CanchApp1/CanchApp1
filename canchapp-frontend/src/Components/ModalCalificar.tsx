@@ -2,6 +2,7 @@
 import { X, Send } from 'lucide-react';
 import { useState } from 'react';
 import { guardarComentario } from '../services/comentarioService';
+import { useToast } from '../context/ToastContext';
 
 interface ModalCalificarProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ interface ModalCalificarProps {
 }
 
 export default function ModalCalificar({ isOpen, onClose, establecimientoId, onSuccess }: ModalCalificarProps) {
+  const { toast } = useToast();
   const [comentario, setComentario] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -38,9 +40,8 @@ export default function ModalCalificar({ isOpen, onClose, establecimientoId, onS
       
       setComentario('');
       onClose();
-    } catch (error) {
-      console.error("Error al guardar el comentario en el servidor:", error);
-      alert("Hubo un problema al guardar tu comentario.");
+    } catch {
+      toast('Hubo un problema al guardar tu comentario. Intenta de nuevo.', 'error');
     } finally {
       setSubmitting(false);
     }
