@@ -2,8 +2,10 @@
 import { useEffect, useState } from 'react';
 import Barra_de_navegacion from '../Components/Barra_navegacion';
 import { obtenerMisReservas } from '../services/reservaService';
-import { obtenerPagosPorUsuario } from '../services/pagoService'; 
+import { obtenerPagosPorUsuario } from '../services/pagoService';
 import { getEstadoDisplay } from '../utils/reservaUtils';
+import { useToast } from '../context/ToastContext';
+import { SkeletonReservaCard } from '../Components/Dashboard/SkeletonCard';
 import { Calendar, Clock, AlertCircle, MapPin, Clock3, CheckCircle2, CalendarDays } from 'lucide-react';
 
 
@@ -26,8 +28,9 @@ const formatCurrency = (value: any) => {
 };
 
 export default function MisReservas() {
+    const { toast } = useToast();
     const [reservas, setReservas] = useState<any[]>([]);
-    const [pagos, setPagos] = useState<any[]>([]); 
+    const [pagos, setPagos] = useState<any[]>([]);
     const [cargando, setCargando] = useState(true);
 
     useEffect(() => {
@@ -37,20 +40,16 @@ export default function MisReservas() {
             try {
                 const payload = JSON.parse(atob(token.split('.')[1]));
                 const userId = payload.userId;
-                
                 if (userId) {
                     const [dataReservas, dataPagos] = await Promise.all([
                         obtenerMisReservas(userId),
                         obtenerPagosPorUsuario(userId)
                     ]);
-
-                    console.log("📊 [MisReservas API Data]", { reservas: dataReservas, pagos: dataPagos });
-
                     setReservas(dataReservas);
                     setPagos(dataPagos);
                 }
-            } catch (error) {
-                console.error("Error al procesar el inventario de reservas:", error);
+            } catch {
+                toast('No se pudieron cargar tus reservas. Intenta de nuevo.', 'error');
             } finally {
                 setCargando(false);
             }
@@ -86,11 +85,8 @@ export default function MisReservas() {
                 </div>
 
                 {cargando ? (
-                    <div className="flex flex-col items-center justify-center py-32 space-y-4">
-                        <div className="w-12 h-12 border-4 border-[#0ed1e8]/20 border-t-[#0ed1e8] rounded-full animate-spin" />
-                        <p className="text-gray-400 text-xs font-bold uppercase tracking-widest animate-pulse">
-                            Sincronizando con el servidor...
-                        </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {Array.from({ length: 6 }).map((_, i) => <SkeletonReservaCard key={i} />)}
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
