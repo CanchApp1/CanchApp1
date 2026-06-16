@@ -40,8 +40,8 @@ export default function Home() {
           </h1>
 
           {/* BOTÓN DE ACCIÓN */}
-          <button 
-            className="mt-12 bg-[#03292e] text-white px-10 py-4 rounded-lg font-bold text-lg hover:bg-[#064e57] transition-all shadow-2xl hover:translate-y-[-2px] active:scale-95"
+          <button
+            className="mt-12 bg-[#03292e] text-white px-10 py-4 rounded-2xl font-bold text-lg hover:bg-[#0ed1e8] hover:text-[#03292e] transition-all shadow-2xl active:scale-95"
             onClick={() => navigate('/CanchasPage')}
           >
             Realizar reserva

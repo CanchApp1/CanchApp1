@@ -8,18 +8,21 @@ import ModalCalificar from '../Components/ModalCalificar';
 import { obtenerHistorialUsuario } from '../services/reservaService';
 import { listarDuelosDisponibles } from '../services/dueloService';
 import { obtenerPagosPorUsuario } from '../services/pagoService';
+import { useToast } from '../context/ToastContext';
+import { SkeletonPartidoItem } from '../Components/Dashboard/SkeletonCard';
 
 type Tab = 'proximos' | 'jugados' | 'duelos' | 'comentarios';
 
 export default function MisPartidos() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [tab, setTab] = useState<Tab>('proximos');
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedSede, setSelectedSede] = useState<number | null>(null);
   const [selectedReservaId, setSelectedReservaId] = useState<number | null>(null);
   const [expandedCardId, setExpandedCardId] = useState<number | null>(null);
 
-  const [toast, setToast] = useState<{ show: boolean; message: string }>({ show: false, message: '' });
+  const [notif, setNotif] = useState<{ show: boolean; message: string }>({ show: false, message: '' });
 
   const [partidosComentados, setPartidosComentados] = useState<Record<number, boolean>>(() => {
     const saved = localStorage.getItem('canchapp_partidos_comentados');
@@ -47,16 +50,10 @@ export default function MisPartidos() {
       try {
         setLoading(true);
 
-        // Consultamos las reservas y los pagos del usuario simultáneamente
         const [resReservas, resPagos] = await Promise.all([
           obtenerHistorialUsuario(currentUserId),
           obtenerPagosPorUsuario(currentUserId)
         ]);
-        
-        // 🔍 ÚNICOS LOGS DE CONTROL PARA AUDITORÍA REAL DE TU BD
-        console.log("📋 [CanchAPP API] Reservas del usuario:", resReservas);
-        console.log("💰 [CanchAPP API] Pagos del usuario:", resPagos);
-        console.log("💰 [CanchAPP API] Pagos del usuario:", resPagos);
 
         const listaReservas = resReservas?.objectResponse ?? resReservas ?? [];
         const listaPagos = resPagos ?? [];
@@ -98,8 +95,8 @@ export default function MisPartidos() {
         const filtradosPropios = todosLosDuelos.filter((duelo: any) => duelo.creadorId === currentUserId);
         setMisDuelos(filtradosPropios);
 
-      } catch (error) {
-        console.error("Error en la carga de datos:", error);
+      } catch {
+        toast('No se pudieron cargar tus partidos. Intenta de nuevo.', 'error');
       } finally {
         setLoading(false);
       }
@@ -109,8 +106,8 @@ export default function MisPartidos() {
   }, [currentUserId, partidosComentados]);
 
   const mostrarNotificacion = (mensaje: string) => {
-    setToast({ show: true, message: mensaje });
-    setTimeout(() => setToast({ show: false, message: '' }), 4000);
+    setNotif({ show: true, message: mensaje });
+    setTimeout(() => setNotif({ show: false, message: '' }), 4000);
   };
 
   const handleCalificar = (establecimientoId: number, reservaId: number) => {
@@ -158,13 +155,13 @@ export default function MisPartidos() {
   return (
     <div className="min-h-screen bg-gray-50/50 pb-12 relative overflow-x-hidden">
       
-      {/* TOAST */}
-      {toast.show && (
+      {/* NOTIFICACIÓN LOCAL DE ÉXITO */}
+      {notif.show && (
         <div className="fixed top-6 right-6 z-[200] bg-[#03292e] text-white px-6 py-4 rounded-2xl shadow-2xl border-l-4 border-[#0ed1e8] flex items-center gap-3 border border-white/10 max-w-sm">
           <CheckCircle className="text-[#0ed1e8] shrink-0" size={22} />
           <div>
             <p className="text-xs font-black uppercase tracking-wider text-[#0ed1e8]">Proceso Exitoso</p>
-            <p className="text-xs font-bold text-gray-200 mt-0.5">{toast.message}</p>
+            <p className="text-xs font-bold text-gray-200 mt-0.5">{notif.message}</p>
           </div>
         </div>
       )}
@@ -216,9 +213,8 @@ export default function MisPartidos() {
 
         {/* FEED PRINCIPAL */}
         {loading ? (
-          <div className="text-center py-20 bg-white rounded-3xl border border-gray-100 shadow-sm">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-[#0ed1e8] mx-auto mb-4"></div>
-            <p className="text-gray-400 font-bold text-sm uppercase tracking-wider">Cargando datos...</p>
+          <div className="space-y-4">
+            {Array.from({ length: 5 }).map((_, i) => <SkeletonPartidoItem key={i} />)}
           </div>
         ) : (
           <div className="space-y-4">
@@ -308,7 +304,7 @@ export default function MisPartidos() {
 
             {/* VISTA DE DUELOS */}
             {tab === 'duelos' && misDuelos.map((duelo) => (
-              <DueloCard key={duelo.dueloId || duelo.id} duelo={duelo} onVerDetalle={(d) => navigate(`/duelos/detalle/${d.dueloId}`)} onAceptar={() => {}} />
+              <DueloCard key={duelo.dueloId || duelo.id} duelo={duelo} onVerDetalle={(d) => navigate(`/duelos/detalle/${d.dueloId}`)} onAceptar={(d) => navigate(`/duelos/detalle/${d.dueloId}`)} />
             ))}
 
             {/* APARTADO "MIS COMENTARIOS" */}
